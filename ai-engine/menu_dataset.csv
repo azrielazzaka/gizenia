@@ -1,0 +1,11 @@
+id,name,category,calories,protein,fat,carbohydrates,serving_size_g
+1,Dada Ayam Bakar,Lauk,165,31,3,0,100
+2,Nasi Putih,Karbo,130,2,0,28,100
+3,Tempe Goreng,Lauk,193,19,10,9,100
+4,Telur Rebus,Lauk,155,13,11,1,100
+5,Brokoli Rebus,Sayur,55,4,0,11,100
+6,Ikan Nila Bakar,Lauk,128,26,2,0,100
+7,Salad Buah,Pencuci Mulut,90,1,0,22,100
+8,Susu Sapi Murni,Minuman,60,3,3,4,100
+9,Mie Instan Goreng,Karbo,380,8,14,54,85
+10,Gado-Gado,Campuran,318,16,17,29,200
