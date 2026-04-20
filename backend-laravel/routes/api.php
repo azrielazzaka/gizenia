@@ -15,10 +15,11 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
-    
+    Route::post('send-otp', [AuthController::class, 'sendOtp']);
+    Route::post('reset-password', [AuthController::class, 'resetPasswordOtp']);
 
     // Endpoint yang butuh Token JWT
-    Route::middleware('auth:api')->group(function () {
+        Route::middleware('auth:api')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
     });

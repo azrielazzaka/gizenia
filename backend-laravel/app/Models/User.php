@@ -22,6 +22,8 @@ class User extends Authenticatable implements JWTSubject
         'weight',
         'height',
         'class_room',
+        'reset_otp',
+        'reset_otp_expires_at',
     ];
 
     protected $hidden = [

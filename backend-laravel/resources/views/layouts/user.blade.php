@@ -80,10 +80,43 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     </button>
                     <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transform opacity-0 transition-opacity duration-200">
-                        <div class="p-2">
-                            <a href="#" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"><i class="fas fa-moon w-5 text-gray-400"></i> Mode Gelap (Segera)</a>
-                            <a href="#" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"><i class="fas fa-globe w-5 text-gray-400"></i> Bahasa (ID)</a>
-                        </div>
+                       <div class="p-2">
+
+    <!-- DARK MODE -->
+    <div class="flex items-center justify-between px-4 py-2.5">
+        <div class="flex items-center text-sm text-gray-700">
+            <i class="fas fa-moon w-5 text-gray-400 mr-2"></i>
+             <span data-lang="dark_mode">Mode Gelap</span>
+        </div>
+
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="darkToggle" class="sr-only peer" onchange="toggleDarkMode()">
+
+            <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-emerald-500 transition-all"></div>
+
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all 
+                        peer-checked:translate-x-5"></div>
+        </label>
+    </div>
+
+    <!-- BAHASA -->
+    <div class="px-4 py-2.5">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center text-sm text-gray-700 dark:text-gray-700">
+            <i class="fas fa-globe w-5 text-gray-400 mr-2"></i>
+            <span data-lang="language">Bahasa</span>
+        </div>
+
+        <select onchange="setLanguage(this.value)" 
+            class="text-sm bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none">
+            
+            <option value="id">🇮🇩 ID</option>
+            <option value="en">🇺🇸 EN</option>
+        </select>
+    </div>
+</div>
+
+</div>
                     </div>
                 </div>
 
@@ -103,7 +136,9 @@
                             <p class="text-sm font-bold text-gray-900 truncate" id="topbarEmail">memuat@email.com</p>
                         </div>
                         <div class="p-2">
-                            <a href="#" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"><i class="far fa-id-badge w-5 text-gray-400"></i> Akun Saya</a>
+                            <a href="/profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+    <i class="far fa-id-badge w-5 text-gray-400"></i> Akun Saya
+</a>
                             <a href="#" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"><i class="fas fa-key w-5 text-gray-400"></i> Ubah Password</a>
                         </div>
                         <div class="p-2 border-t border-gray-50">
