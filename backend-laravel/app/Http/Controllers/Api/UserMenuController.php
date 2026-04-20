@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\FoodMenu;
-use App\Models\Menu;
+use App\Models\FoodMenu; // <-- Menggunakan model FoodMenu yang benar
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http; // <-- WAJIB ADA: Untuk menelpon AI Python
 
 class UserMenuController extends Controller
 {
@@ -18,16 +18,36 @@ class UserMenuController extends Controller
         $height = $user->height ?? 140; // cm
         $age = $user->age ?? 12; // tahun
 
-        // 2. Kalkulasi TDEE (Kebutuhan Kalori Harian)
+        // 2. Kalkulasi TDEE & Target Makro (Karbo, Pro, Lemak)
         $bmr = (10 * $weight) + (6.25 * $height) - (5 * $age) + 5;
         $tdee = $bmr * 1.375;
-        $targetMealCalories = $tdee * 0.35;
+        $targetMealCalories = $tdee * 0.35; // 35% untuk 1x makan utama
+        
+        // Asumsi target makronutrisi seimbang untuk 1x makan
+        $targetProtein = ($weight * 1.5) * 0.35; 
+        $targetFat = ($targetMealCalories * 0.25) / 9;
+        $targetCarbs = ($targetMealCalories * 0.50) / 4;
 
-        // 3. AI Rekomendasi (Harus mencari dari SEMUA menu di database)
-        $allMenusForAI = FoodMenu::all();
-        $recommendations = $allMenusForAI->sortBy(function($menu) use ($targetMealCalories) {
-            return abs((float)$menu->calories - $targetMealCalories);
-        })->take(3)->values();
+        // 3. MINTA REKOMENDASI KE MESIN AI (FLASK PYTHON) 🧠🤖
+        $recommendations = [];
+        try {
+            // Laravel "mengetuk pintu" port 5000 milik Python
+            $response = Http::timeout(5)->post('http://127.0.0.1:5000/api/predict/recommendation', [
+                'target_calories' => $targetMealCalories,
+                'target_protein' => $targetProtein,
+                'target_fat' => $targetFat,
+                'target_carbs' => $targetCarbs
+            ]);
+
+            // Jika Python menjawab (Status 200 OK)
+            if ($response->successful()) {
+                $aiData = $response->json();
+                $recommendations = $aiData['rekomendasi']; // Ambil array rekomendasinya dari Python
+            }
+        } catch (\Exception $e) {
+            // Jika server Python mati, fallback (kosongkan atau isi pesan error)
+            $recommendations = [];
+        }
 
         // 4. Katalog Semua Menu (Hanya diambil 12 per halaman untuk Paginasi)
         $paginatedMenus = FoodMenu::paginate(12);
@@ -40,7 +60,7 @@ class UserMenuController extends Controller
                 'tdee' => round($tdee),
                 'target_meal' => round($targetMealCalories)
             ],
-            'recommendations' => $recommendations,
+            'recommendations' => $recommendations, // <-- Data ini sekarang murni dari AI Python!
             'all_menus' => $paginatedMenus // Mengirim objek paginasi
         ]);
     }
