@@ -83,6 +83,21 @@
     </div>
 </div>
 
+<div id="customAlertModal" class="fixed inset-0 z-[100] hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300" id="customAlertContent">
+        <div class="p-6 text-center">
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                <i class="fas fa-exclamation-circle text-red-500 text-3xl animate-pulse"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2" id="customAlertTitle">Tunggu Dulu!</h3>
+            <p class="text-sm text-gray-500 mb-6" id="customAlertMessage">Pesan error di sini.</p>
+            <button onclick="closeCustomAlert()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-colors shadow-md">
+                Mengerti
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     const token = localStorage.getItem('jwt_token');
     if (!token) window.location.href = '/login';
@@ -91,6 +106,33 @@
     let userProfile = {};
     let targetCalories = 0;
     let foodCart = [];
+
+    // FUNGSI KONTROL MODAL KUSTOM
+    function showCustomAlert(title, message) {
+        document.getElementById('customAlertTitle').innerText = title;
+        document.getElementById('customAlertMessage').innerText = message;
+        
+        const modal = document.getElementById('customAlertModal');
+        const content = document.getElementById('customAlertContent');
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function closeCustomAlert() {
+        const modal = document.getElementById('customAlertModal');
+        const content = document.getElementById('customAlertContent');
+
+        modal.classList.add('opacity-0');
+        content.classList.add('scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
 
     // 1. Ambil Profil & Hitung Target (BMR & TDEE)
     async function initTracker() {
@@ -102,14 +144,12 @@
             const h = user.height || 140;
             const a = user.age || 12;
             
-            // Rumus Mifflin-St Jeor
             const bmr = (10 * w) + (6.25 * h) - (5 * a) + 5;
             const tdee = bmr * 1.375;
-            targetCalories = tdee * 0.35; // 35% untuk 1x makan utama
+            targetCalories = tdee * 0.35; 
             
             document.getElementById('targetMeal').innerText = Math.round(targetCalories);
 
-            // Ambil Database Menu
             const resMenu = await fetch('/api/menus', { headers: { 'Authorization': `Bearer ${token}` }});
             allMenus = await resMenu.json();
             
@@ -128,17 +168,22 @@
         const portion = document.getElementById('portionInput').value;
         const menuId = select.value;
 
-        if(!menuId) return alert("Pilih makanan terlebih dahulu!");
-        if(portion <= 0) return alert("Porsi harus lebih dari 0 gram.");
+        if(!menuId) {
+            showCustomAlert("Pilih Makanan Dulu!", "Anda belum memilih makanan dari daftar. Silakan pilih makanan sebelum menekan tombol tambah.");
+            return;
+        }
+        if(portion <= 0) {
+            showCustomAlert("Porsi Tidak Valid", "Porsi harus lebih dari 0 gram. Masukkan jumlah gramasi yang benar.");
+            return;
+        }
 
         const menuData = allMenus.find(m => (m._id === menuId || m.id === menuId));
         if(!menuData) return;
 
-        // Kalkulasi berdasarkan rasio gramasi
         const ratio = parseFloat(portion) / parseFloat(menuData.serving_size_g || 100);
         
         foodCart.push({
-            id: Date.now(), // ID Unik untuk hapus
+            id: Date.now(),
             name: menuData.name,
             weight: portion,
             cals: parseFloat(menuData.calories || 0) * ratio,
@@ -159,7 +204,7 @@
 
         if(foodCart.length === 0) {
             list.innerHTML = '<li class="py-8 text-center text-gray-400 text-sm">Piring masih kosong.</li>';
-            evaluateNutrition(0);
+            evaluateNutritionWithAI(0); // Panggil AI
             return;
         }
 
@@ -179,18 +224,17 @@
             `;
         });
 
-        // Update UI Angka
         document.getElementById('currentCals').innerText = `${Math.round(totCals)} kkal`;
         document.getElementById('currentPro').innerText = `${Math.round(totPro)}g`;
         document.getElementById('currentCarbs').innerText = `${Math.round(totCarbs)}g`;
         document.getElementById('currentFat').innerText = `${Math.round(totFat)}g`;
 
-        // Update Bar
         let percent = (totCals / targetCalories) * 100;
         if(percent > 100) percent = 100;
         document.getElementById('barCals').style.width = `${percent}%`;
 
-        evaluateNutrition(totCals);
+        // PANGGIL AI SETIAP KALI KERANJANG BERUBAH
+        evaluateNutritionWithAI(totCals);
     }
 
     // 4. Hapus Makanan
@@ -199,15 +243,16 @@
         renderCart();
     }
 
-    // 5. AI Verdict Logic
-    function evaluateNutrition(totalCals) {
+    // 5. EVALUASI DENGAN AI (PYTHON FLASK)
+    async function evaluateNutritionWithAI(totalCals) {
         const box = document.getElementById('aiVerdictBox');
         const icon = document.getElementById('verdictIcon');
         const title = document.getElementById('verdictTitle');
         const desc = document.getElementById('verdictDesc');
 
-        if(totalCals === 0) {
-            box.className = "mt-8 bg-white text-gray-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10";
+        // Jika piring kosong
+        if(totalCals === 0 || foodCart.length === 0) {
+            box.className = "mt-8 bg-white text-emerald-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10";
             icon.innerHTML = '<i class="fas fa-robot text-gray-400 text-xl"></i>';
             icon.className = "w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2";
             title.innerText = "Belum Ada Data";
@@ -215,30 +260,68 @@
             return;
         }
 
-        const lowerBound = targetCalories * 0.8; // 80% dari target
-        const upperBound = targetCalories * 1.2; // 120% dari target
+        // Tampilkan status Loading
+        title.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menganalisis...';
+        desc.innerText = "AI sedang membaca komposisi makronutrisi piring Anda.";
 
-        if (totalCals < lowerBound) {
-            // KURANG
-            box.className = "mt-8 bg-white text-yellow-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 border-b-4 border-yellow-500";
-            icon.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>';
-            icon.className = "w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2";
-            title.innerText = "Kekurangan Kalori";
-            desc.innerText = "Porsi ini belum cukup memenuhi kebutuhan energi Anda. Tambahkan lauk atau porsi utama.";
-        } else if (totalCals > upperBound) {
-            // BERLEBIH
+        try {
+            // Sesuaikan variabel keranjang untuk dikirim ke Python
+            const payloadFoods = foodCart.map(item => ({
+                calories: item.cals,
+                protein: item.pro,
+                carbohydrates: item.carbs,
+                fat: item.fat
+            }));
+
+            // Tembak ke API Flask Python
+            const response = await fetch('http://127.0.0.1:5000/api/predict/evaluation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ foods: payloadFoods })
+            });
+
+            const aiData = await response.json();
+
+            if (aiData.status === 'success') {
+                const verdict = aiData.evaluation.verdict;
+                let messages = aiData.evaluation.messages.join(" ");
+
+                // Ubah Warna Box berdasarkan Vonis dari Python
+                if (verdict === "Seimbang") {
+                    box.className = "mt-8 bg-white text-emerald-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 scale-105 border-b-4 border-emerald-500";
+                    icon.innerHTML = '<i class="fas fa-check-circle text-emerald-500 text-2xl"></i>';
+                    icon.className = "w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2";
+                } else if (verdict.includes("Tinggi") || verdict.includes("Kurang")) {
+                    box.className = "mt-8 bg-white text-orange-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 border-b-4 border-orange-500";
+                    icon.innerHTML = '<i class="fas fa-exclamation-triangle text-orange-500 text-xl"></i>';
+                    icon.className = "w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2";
+                }
+
+                // Kalkulasi Kalori (Digabung dengan hasil Makronutrisi Python)
+                const lowerBound = targetCalories * 0.8; 
+                const upperBound = targetCalories * 1.2; 
+
+                if (totalCals < lowerBound) {
+                    messages += "<br><br><b>Catatan Kalori:</b> Porsi ini belum cukup memenuhi kebutuhan energi Anda.";
+                } else if (totalCals > upperBound) {
+                    messages += "<br><br><b>Catatan Kalori:</b> Hati-hati! Kalori porsi ini melebihi target Anda.";
+                }
+
+                // Tampilkan Hasil Akhir
+                title.innerText = "AI: " + verdict;
+                desc.innerHTML = messages;
+
+            } else {
+                title.innerText = "AI Error";
+                desc.innerText = aiData.message || "Terdapat kesalahan saat menganalisis.";
+            }
+
+        } catch (error) {
             box.className = "mt-8 bg-white text-red-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 border-b-4 border-red-500";
-            icon.innerHTML = '<i class="fas fa-fire text-red-500 text-xl"></i>';
+            icon.innerHTML = '<i class="fas fa-wifi text-red-500 text-xl"></i>';
             icon.className = "w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2";
-            title.innerText = "Kelebihan Kalori";
-            desc.innerText = "Hati-hati! Porsi ini melebihi batas aman makan utama Anda. Kurangi gramasi atau ganti menu.";
-        } else {
-            // SEIMBANG (PERFECT)
-            box.className = "mt-8 bg-white text-emerald-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 scale-105 border-b-4 border-emerald-500";
-            icon.innerHTML = '<i class="fas fa-check-circle text-emerald-500 text-2xl"></i>';
-            icon.className = "w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2";
-            title.innerText = "Sangat Seimbang!";
-            desc.innerText = "Luar biasa! Kombinasi ini sangat pas untuk menunjang aktivitas fisik Anda.";
+            title.innerText = "Koneksi Terputus";
+            desc.innerText = "Gagal terhubung ke AI. Pastikan server Python (Flask) sudah menyala di terminal.";
         }
     }
 
