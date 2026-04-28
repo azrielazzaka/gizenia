@@ -120,12 +120,8 @@
                     alertBox.classList.add('bg-green-100', 'text-green-700');
                     alertBox.classList.remove('hidden');
                     
-                    // Simpan token & redirect
-                    localStorage.setItem('jwt_token', data.access_token);
-                    localStorage.setItem('user_data', JSON.stringify(data.user));
-                    
                     setTimeout(() => {
-                        window.location.href = '/user/dashboard';
+                        window.location.href = '/login';
                     }, 1500);
                 } else {
                     // Menampilkan pesan error validasi pertama yang ditemukan

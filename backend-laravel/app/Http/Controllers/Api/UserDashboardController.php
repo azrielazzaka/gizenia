@@ -63,15 +63,47 @@ class UserDashboardController extends Controller
     }
 
     // 3. Ambil riwayat distribusi yang sudah diterima user (Paginasi 5)
-    public function history()
-    {
-        $user = auth()->user();
-        
-        // Ambil semua distribusi yang pernah dikirim ke kelas user ini
-        $history = Distribution::where('target_classes', $user->class_room)
-            ->orderBy('created_at', 'desc')
-            ->paginate(5);
+    public function history(Request $request)
+{
+    $user = auth()->user();
+    
+    $all = Distribution::where('target_classes', $user->class_room)
+        ->orderBy('distribution_date', 'desc')
+        ->get();
 
-        return response()->json($history);
+    // 📅 FILTER TANGGAL
+    if ($request->date) {
+        $filterDate = $request->date;
+        $all = $all->filter(function ($item) use ($filterDate) {
+            return str_starts_with($item->distribution_date, $filterDate);
+        })->values();
     }
+
+    // 🔎 SEARCH makanan
+    if ($request->search) {
+        $search = strtolower($request->search);
+        $all = $all->filter(function ($item) use ($search) {
+            foreach ($item->foods as $food) {
+                if (str_contains(strtolower($food['name']), $search)) {
+                    return true;
+                }
+            }
+            return false;
+        })->values();
+    }
+
+    // Manual paginate
+    $page = $request->page ?? 1;
+    $perPage = 5;
+    $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        $all->forPage($page, $perPage),
+        $all->count(),
+        $perPage,
+        $page,
+        ['path' => $request->url(), 'query' => $request->query()]
+    );
+
+    return response()->json($paginated);
+}
+
 }

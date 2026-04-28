@@ -74,30 +74,110 @@
                 <input type="text" placeholder="Cari analitik, penerima..." class="w-full bg-white border border-gray-200 rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm">
             </div>
 
-            <div class="flex items-center space-x-5">
-                <button class="relative p-2 text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                <button class="p-2 text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                </button>
-                <div class="h-8 w-px bg-gray-200 mx-2"></div>
-                <div class="flex items-center space-x-3 cursor-pointer">
-                    <div class="text-right hidden md:block">
-                        <p class="text-sm font-bold text-gray-800 leading-tight">Pengguna Admin</p>
-                        <p class="text-[11px] text-gray-500 uppercase">Manajer Sistem</p>
-                    </div>
-                    <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-white">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </div>
-                </div>
-            </div>
+            <div class="flex items-center space-x-5 relative">
+
+    <!-- ⚙️ SETTING (SVG LAMA) -->
+    <button onclick="toggleSetting()" class="p-2 text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0
+                a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37
+                a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35
+                a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37
+                a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0
+                a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37
+                a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35
+                a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37
+                .996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+    </button>
+
+    <!-- 🔽 DROPDOWN SETTING -->
+<div id="settingMenu"
+    class="hidden absolute right-full mr-3 top-12 w-48
+           bg-white border border-gray-200
+           rounded-xl shadow-lg overflow-hidden z-50">
+           
+        <!-- DARK MODE -->
+<div class="flex items-center justify-between px-4 py-2.5">
+    <div class="flex items-center text-sm text-gray-700">
+        <i class="fas fa-moon w-5 text-gray-400 mr-2"></i>
+        <span data-lang="dark_mode">Mode Gelap</span>
+    </div>
+
+    <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="darkToggle" class="sr-only peer" onchange="toggleDarkMode()">
+
+        <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-emerald-500 transition-all"></div>
+
+        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all 
+                    peer-checked:translate-x-5"></div>
+    </label>
+</div>
+
+<!-- BAHASA -->
+<div class="px-4 py-2.5">
+    <div class="flex items-center text-sm text-gray-700">
+        <i class="fas fa-globe w-5 text-gray-400 mr-2"></i>
+        <span id="langText">Bahasa Indonesia</span>
+    </div>
+</div>
+    </div>
+
+    <div class="h-8 w-px bg-gray-200 mx-2"></div>
+
+    <!-- USER -->
+    <div class="flex items-center space-x-3 cursor-pointer">
+        <div class="text-right hidden md:block">
+            <p class="text-sm font-bold text-gray-800">Pengguna Admin</p>
+            <p class="text-[11px] text-gray-500 uppercase">Manajer Sistem</p>
+        </div>
+        <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+        </div>
+    </div>
+</div>
         </header>
 
         <main class="flex-1 overflow-x-hidden overflow-y-auto p-8">
             @yield('content')
         </main>
     </div>
+    <script>
+    function toggleSetting() {
+        document.getElementById('settingMenu').classList.toggle('hidden');
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem(
+            'darkMode',
+            document.body.classList.contains('dark')
+        );
+    }
+
+    function setLang(lang) {
+        localStorage.setItem('lang', lang);
+        alert('Bahasa: ' + lang.toUpperCase());
+    }
+
+    // Tutup dropdown kalau klik di luar
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('settingMenu');
+        if (!e.target.closest('button')) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    // Load dark mode
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark');
+    }
+</script>
 </body>
 </html>

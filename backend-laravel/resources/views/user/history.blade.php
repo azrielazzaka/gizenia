@@ -5,6 +5,23 @@
     <h2 class="text-3xl font-bold text-gray-900">Riwayat Distribusi Makanan</h2>
     <p class="text-gray-500 text-sm mt-1">Lacak seluruh rekam jejak penerimaan nutrisi harian Anda di sini.</p>
 </div>
+<div class="flex flex-col md:flex-row gap-3 mb-4">
+
+    <!-- 🔎 LIVE SEARCH -->
+    <input type="text" id="historySearch" placeholder="Cari makanan..."
+        class="border rounded-xl px-3 py-2 text-sm w-full md:w-1/3">
+
+    <!-- 📅 FILTER TANGGAL -->
+    <input type="date" id="historyDate"
+        class="border rounded-xl px-3 py-2 text-sm">
+
+    <!-- tombol cepat hari ini -->
+    <button onclick="loadHistory(1)"
+    class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-semibold transition">
+    Cari
+</button>
+
+</div>
 
 <div class="bg-white rounded-3xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-50 min-h-[60vh] flex flex-col">
     <div class="overflow-x-auto">
@@ -48,57 +65,74 @@
 
     async function loadHistory(page = 1) {
         if (!currentUserId) return;
+
         try {
-            const res = await fetch(`/api/user/history?page=${page}`, { headers: { 'Authorization': `Bearer ${token}` }});
+            const search = document.getElementById("historySearch").value || '';
+            const date = document.getElementById("historyDate").value || '';
+
+            const res = await fetch(`/api/user/history?page=${page}&search=${search}&date=${date}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
             const data = await res.json();
-            
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
 
-            if(data.data.length === 0) {
+            if (!data.data || data.data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="py-12 text-center text-gray-400">Belum ada riwayat distribusi makanan.</td></tr>';
                 return;
             }
 
             data.data.forEach(dist => {
-                const foodsText = dist.foods.map(f => `<span class="font-semibold text-gray-800">${f.name}</span> <span class="text-gray-400 text-xs">(${f.weight}g)</span>`).join(', ');
-                let statusHtml = `<span class="bg-yellow-50 border border-yellow-100 text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full"><i class="fas fa-clock mr-1"></i> BELUM DIJAWAB</span>`;
+                const foodsText = dist.foods.map(f =>
+                    `<span class="font-semibold text-gray-800">${f.name}</span>
+                     <span class="text-gray-400 text-xs">(${f.weight}g)</span>`
+                ).join(', ');
+
+                let statusHtml = `<span class="bg-yellow-50 border border-yellow-100 text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full">BELUM DIJAWAB</span>`;
                 let timeHtml = '-';
-                
+
                 if (dist.responses && dist.responses.length > 0) {
                     const userResponse = dist.responses.find(r => r.user_id === currentUserId);
+
                     if (userResponse) {
-                        timeHtml = new Date(userResponse.responded_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                        timeHtml = new Date(userResponse.responded_at)
+                            .toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
                         if (userResponse.answer === 'Ya') {
-                            statusHtml = `<span class="bg-green-50 border border-green-100 text-emerald-600 text-[10px] font-bold px-3 py-1.5 rounded-full"><i class="fas fa-check mr-1"></i> SUDAH DITERIMA</span>`;
+                            statusHtml = `<span class="bg-green-50 border border-green-100 text-emerald-600 text-[10px] font-bold px-3 py-1.5 rounded-full">SUDAH DITERIMA</span>`;
                         } else {
-                            statusHtml = `<span class="bg-gray-100 border border-gray-200 text-gray-500 text-[10px] font-bold px-3 py-1.5 rounded-full"><i class="fas fa-times mr-1"></i> TIDAK DITERIMA</span>`;
+                            statusHtml = `<span class="bg-gray-100 border border-gray-200 text-gray-500 text-[10px] font-bold px-3 py-1.5 rounded-full">TIDAK DITERIMA</span>`;
                         }
                     }
                 }
 
                 tbody.innerHTML += `
-                    <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <tr class="border-b border-gray-50 hover:bg-gray-50/50">
                         <td class="py-5 px-6 font-bold text-gray-900">${dist.distribution_date}</td>
                         <td class="py-5 px-6">${foodsText}</td>
                         <td class="py-5 px-6 text-center">${statusHtml}</td>
-                        <td class="py-5 px-6 font-bold text-gray-400 text-right text-xs">${timeHtml} WIB</td>
+                        <td class="py-5 px-6 text-right text-xs">${timeHtml} WIB</td>
                     </tr>
                 `;
             });
 
-            // Kontrol Paginasi
-            document.getElementById('historyInfo').innerText = `Menampilkan ${data.from || 0} - ${data.to || 0} dari total ${data.total} catatan`;
-            const controls = document.getElementById('historyPagination');
-            controls.innerHTML = '';
-            
-            if (data.current_page > 1) controls.innerHTML += `<button onclick="loadHistory(${data.current_page - 1})" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 text-xs font-bold transition shadow-sm">Sebelumnya</button>`;
-            controls.innerHTML += `<span class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-black shadow-sm">${data.current_page}</span>`;
-            if (data.current_page < data.last_page) controls.innerHTML += `<button onclick="loadHistory(${data.current_page + 1})" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-xs font-bold transition shadow-md">Selanjutnya</button>`;
+            document.getElementById('historyInfo').innerText =
+                `Menampilkan ${data.from || 0} - ${data.to || 0} dari total ${data.total} catatan`;
 
-        } catch(e) {}
+        } catch (e) {
+            console.error("Error history:", e);
+        }
     }
 
     init();
+
+    // ⌨️ Support Enter di keyboard
+    document.getElementById("historySearch").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") loadHistory(1);
+    });
+    document.getElementById("historyDate").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") loadHistory(1);
+    });
 </script>
 @endsection

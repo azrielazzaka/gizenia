@@ -104,15 +104,8 @@
     <div class="flex items-center justify-between">
         <div class="flex items-center text-sm text-gray-700 dark:text-gray-700">
             <i class="fas fa-globe w-5 text-gray-400 mr-2"></i>
-            <span data-lang="language">Bahasa</span>
+            <span data-lang="language">Bahasa Indonesia</span>
         </div>
-
-        <select onchange="setLanguage(this.value)" 
-            class="text-sm bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none">
-            
-            <option value="id">🇮🇩 ID</option>
-            <option value="en">🇺🇸 EN</option>
-        </select>
     </div>
 </div>
 
