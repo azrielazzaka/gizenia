@@ -21,6 +21,7 @@ Route::prefix('admin')->group(function () {
     Route::view('/menu', 'admin.menu')->name('admin.menu');
     Route::view('/distribusi', 'admin.distribusi')->name('admin.distribusi');
     Route::view('/laporan', 'admin.laporan')->name('admin.laporan');
+    Route::view('/api-docs', 'admin.api-docs')->name('admin.api');
 });
 
 // User Routes

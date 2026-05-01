@@ -52,14 +52,16 @@
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Laporan & Analitik
             </a>
+
+            <a href="{{ route('admin.api') }}" 
+               class="flex items-center px-4 py-3 {{ Request::is('admin/api-docs') ? 'bg-green-100/50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100' }} rounded-xl font-medium text-sm transition-colors">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                Dokumentasi API
+            </a>
         </nav>
     </div>
 
     <div class="px-4 py-6 space-y-4">
-        <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
-            Bantuan
-        </a>
         <a href="{{ route('login') }}" class="flex items-center px-4 py-2 text-sm text-gray-500 hover:text-red-600 transition-colors" onclick="localStorage.clear()">
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> 
             Keluar
@@ -69,9 +71,17 @@
 
     <div class="flex-1 flex flex-col h-full overflow-hidden">
         <header class="h-20 flex items-center justify-between px-8 bg-[#F8F9FA]">
-            <div class="relative w-96">
+            <div class="relative w-96" id="searchContainer">
                 <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" placeholder="Cari analitik, penerima..." class="w-full bg-white border border-gray-200 rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm">
+                <input type="text" id="globalSearchInput" onfocus="showSearchDropdown()" oninput="filterSearch(this.value)" placeholder="Cari halaman, fitur, menu..." class="w-full bg-[#Eef0f2] border-none rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner transition-all">
+                
+                <div id="searchDropdown" class="hidden absolute left-0 top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 transform opacity-100 transition-all duration-200">
+                    <div class="px-4 py-2.5 bg-gray-50/80 border-b border-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Rekomendasi Halaman
+                    </div>
+                    <ul id="searchResults" class="max-h-72 overflow-y-auto py-1">
+                        </ul>
+                </div>
             </div>
 
             <div class="flex items-center space-x-5 relative">
@@ -149,35 +159,99 @@
         </main>
     </div>
     <script>
-    function toggleSetting() {
-        document.getElementById('settingMenu').classList.toggle('hidden');
+const searchPages = [
+    {
+        title: 'Dashboard',
+        desc: 'Ringkasan sistem dan statistik',
+        url: '/admin/dashboard',
+        icon: '📊'
+    },
+    {
+        title: 'Manajemen Pengguna',
+        desc: 'Kelola data pengguna',
+        url: '/admin/pengguna',
+        icon: '👥'
+    },
+    {
+        title: 'Menu Data',
+        desc: 'Kelola menu dan nutrisi',
+        url: '/admin/menu',
+        icon: '🍽️'
+    },
+    {
+        title: 'Distribusi Makanan',
+        desc: 'Riwayat dan proses distribusi',
+        url: '/admin/distribusi',
+        icon: '🚚'
+    },
+    {
+        title: 'Laporan & Analitik',
+        desc: 'Statistik dan laporan sistem',
+        url: '/admin/laporan',
+        icon: '📈'
+    },
+    {
+        title: 'Dokumentasi API',
+        desc: 'API backend GIZENIA',
+        url: '/admin/api-docs',
+        icon: '🔌'
+    },
+];
+
+function showSearchDropdown() {
+    document.getElementById('searchDropdown').classList.remove('hidden');
+    renderResults(searchPages);
+}
+
+function filterSearch(keyword) {
+    const filtered = searchPages.filter(page =>
+        page.title.toLowerCase().includes(keyword.toLowerCase()) ||
+        page.desc.toLowerCase().includes(keyword.toLowerCase())
+    );
+    renderResults(filtered);
+}
+
+function renderResults(results) {
+    const container = document.getElementById('searchResults');
+    container.innerHTML = '';
+
+    if (results.length === 0) {
+        container.innerHTML = `
+            <li class="px-4 py-3 text-sm text-gray-400">
+                Tidak ditemukan
+            </li>
+        `;
+        return;
     }
 
-    function toggleDarkMode() {
-        document.body.classList.toggle('dark');
-        localStorage.setItem(
-            'darkMode',
-            document.body.classList.contains('dark')
-        );
-    }
-
-    function setLang(lang) {
-        localStorage.setItem('lang', lang);
-        alert('Bahasa: ' + lang.toUpperCase());
-    }
-
-    // Tutup dropdown kalau klik di luar
-    document.addEventListener('click', function (e) {
-        const menu = document.getElementById('settingMenu');
-        if (!e.target.closest('button')) {
-            menu.classList.add('hidden');
-        }
+    results.forEach(page => {
+        container.innerHTML += `
+            <li>
+                <a href="${page.url}" 
+                   class="flex items-start gap-3 px-4 py-3 hover:bg-gray-100 transition">
+                    <div class="text-xl">${page.icon}</div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-800">
+                            ${page.title}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            ${page.desc}
+                        </p>
+                    </div>
+                </a>
+            </li>
+        `;
     });
+}
 
-    // Load dark mode
-    if (localStorage.getItem('darkMode') === 'true') {
-        document.body.classList.add('dark');
+// Tutup dropdown saat klik di luar
+document.addEventListener('click', function (e) {
+    const searchBox = document.getElementById('searchContainer');
+    const dropdown = document.getElementById('searchDropdown');
+    if (!searchBox.contains(e.target)) {
+        dropdown.classList.add('hidden');
     }
+});
 </script>
 </body>
 </html>
