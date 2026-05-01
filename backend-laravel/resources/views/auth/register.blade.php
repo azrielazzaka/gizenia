@@ -8,6 +8,15 @@
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen py-10">
 
+    <div class="absolute top-6 left-6">
+        <a href="/" class="flex items-center gap-2 text-sm text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Kembali
+        </a>
+    </div>
+    
     <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-emerald-600">GIZENIA<span class="text-gray-800">.AI</span></h1>
@@ -111,12 +120,8 @@
                     alertBox.classList.add('bg-green-100', 'text-green-700');
                     alertBox.classList.remove('hidden');
                     
-                    // Simpan token & redirect
-                    localStorage.setItem('jwt_token', data.access_token);
-                    localStorage.setItem('user_data', JSON.stringify(data.user));
-                    
                     setTimeout(() => {
-                        window.location.href = '/user/dashboard';
+                        window.location.href = '/login';
                     }, 1500);
                 } else {
                     // Menampilkan pesan error validasi pertama yang ditemukan

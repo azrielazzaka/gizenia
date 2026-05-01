@@ -8,6 +8,15 @@
 </head>
 <body class="bg-gray-50 flex items-center justify-center h-screen">
 
+    <div class="absolute top-6 left-6">
+        <a href="/" class="flex items-center gap-2 text-sm text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Kembali
+        </a>
+    </div>
+
     <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-emerald-600">GIZENIA<span class="text-gray-800">.AI</span></h1>
@@ -27,7 +36,10 @@
                 <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors" placeholder="••••••••">
                 
                 <div class="flex justify-end mt-2">
-                    <a href="javascript:void(0)" onclick="handleForgotPassword()" class="text-xs text-emerald-600 hover:text-emerald-700 hover:underline font-medium transition-colors">Lupa kata sandi?</a>
+                    <a href="/forgot-password" 
+                    class="text-xs text-emerald-600 hover:text-emerald-700 hover:underline font-medium transition-colors">
+                    Lupa kata sandi?
+                    </a>
                 </div>
             </div>
 
@@ -92,43 +104,8 @@
             }
         });
 
-        // Fitur Lupa Password
-        async function handleForgotPassword() {
-            const email = document.getElementById('email').value;
-            const alertBox = document.getElementById('alertBox');
+        
 
-            if (!email) {
-                alertBox.innerHTML = 'Silakan isi email Anda terlebih dahulu di kolom email untuk mereset password.';
-                alertBox.className = 'mb-4 p-3 rounded bg-yellow-100 text-yellow-700 text-sm';
-                alertBox.classList.remove('hidden');
-                return;
-            }
-
-            if (!confirm('Kirim instruksi reset password ke ' + email + '?')) return;
-
-            try {
-                const response = await fetch('/api/auth/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    alertBox.innerHTML = data.message;
-                    alertBox.className = 'mb-4 p-3 rounded bg-green-100 text-green-700 text-sm';
-                } else {
-                    alertBox.innerHTML = data.error || data.email[0] || 'Gagal mengirim instruksi.';
-                    alertBox.className = 'mb-4 p-3 rounded bg-red-100 text-red-600 text-sm';
-                }
-                alertBox.classList.remove('hidden');
-            } catch (e) {
-                alertBox.innerHTML = 'Gagal menghubungi server.';
-                alertBox.className = 'mb-4 p-3 rounded bg-red-100 text-red-600 text-sm';
-                alertBox.classList.remove('hidden');
-            }
-        }
     </script>
 </body>
 </html>
