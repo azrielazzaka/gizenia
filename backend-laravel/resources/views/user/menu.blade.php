@@ -27,11 +27,42 @@
     <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
     Sangat Disarankan Untuk Anda
 </h3>
-<div id="recommendationGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
-    <div class="col-span-full py-6 text-center text-gray-400">Menghitung rekomendasi AI...</div>
+
+<div class="relative mb-12">
+    <button id="recPrev" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow p-3 rounded-full">
+        &#9664;
+    </button>
+
+    <div id="recommendationGrid" class="flex gap-5 overflow-x-auto scroll-smooth px-12">
+        <div class="text-gray-400">Menghitung rekomendasi AI...</div>
+    </div>
+
+    <button id="recNext" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow p-3 rounded-full">
+        &#9654;
+    </button>
 </div>
 
 <h3 class="text-lg font-bold text-gray-900 mb-4 px-1">Katalog Semua Menu</h3>
+<div class="flex flex-col md:flex-row gap-3 mb-4">
+
+    <!-- search -->
+    <input type="text" id="searchInput" placeholder="Cari menu..."
+        class="border rounded-xl px-3 py-2 text-sm w-full md:w-1/3">
+
+    <!-- filter -->
+    <select id="sortSelect" class="border rounded-xl px-3 py-2 text-sm">
+        <option value="">Urutan Default</option>
+        <option value="az">A - Z</option>
+        <option value="za">Z - A</option>
+        <option value="cal_low">Kalori Terendah</option>
+        <option value="cal_high">Kalori Tertinggi</option>
+    </select>
+
+    <button onclick="applyFilter()" class="bg-emerald-600 text-white px-4 rounded-xl text-sm">
+        Terapkan
+    </button>
+</div>
+
 <div id="allMenuGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-6">
     <div class="col-span-full py-6 text-center text-gray-400">Memuat katalog menu...</div>
 </div>
@@ -80,58 +111,138 @@
     }
 
     async function loadMenus(page = 1) {
-        try {
-            const res = await fetch(`/api/user/menus?page=${page}`, { headers: { 'Authorization': `Bearer ${token}` }});
-            const data = await res.json();
-            
-            if (page === 1) {
-                document.getElementById('aiAge').innerText = data.user_stats.age;
-                document.getElementById('aiWeight').innerText = data.user_stats.weight;
-                document.getElementById('aiHeight').innerText = data.user_stats.height;
-                document.getElementById('aiTdee').innerText = data.user_stats.tdee.toLocaleString() + ' kkal';
-                document.getElementById('aiTarget').innerText = data.user_stats.target_meal.toLocaleString() + ' kkal';
+    try {
+        // ambil value filter
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
 
-                const recContainer = document.getElementById('recommendationGrid');
-                recContainer.innerHTML = '';
-                if(data.recommendations && data.recommendations.length > 0) {
-                    data.recommendations.forEach(menu => recContainer.insertAdjacentHTML('beforeend', createMenuCard(menu, true)));
-                } else {
-                    recContainer.innerHTML = '<div class="col-span-full py-6 text-gray-400 text-sm">Belum ada rekomendasi dari AI.</div>';
-                }
-            }
+        const search = searchInput && searchInput.value ? searchInput.value : '';
+        const sort = sortSelect && sortSelect.value ? sortSelect.value : '';
 
-            const allContainer = document.getElementById('allMenuGrid');
-            const menuData = data.all_menus.data; 
-            allContainer.innerHTML = '';
-            
-            if(menuData.length > 0) {
-                menuData.forEach(menu => allContainer.insertAdjacentHTML('beforeend', createMenuCard(menu, false)));
+        // request ke API + filter
+        const res = await fetch(`/api/user/menus?page=${page}&search=${search}&sort=${sort}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        
+        // ================= AI RECOMMENDATION =================
+        if (page === 1) {
+            document.getElementById('aiAge').innerText = data.user_stats.age;
+            document.getElementById('aiWeight').innerText = data.user_stats.weight;
+            document.getElementById('aiHeight').innerText = data.user_stats.height;
+            document.getElementById('aiTdee').innerText = data.user_stats.tdee.toLocaleString() + ' kkal';
+            document.getElementById('aiTarget').innerText = data.user_stats.target_meal.toLocaleString() + ' kkal';
+
+            const recContainer = document.getElementById('recommendationGrid');
+            recContainer.innerHTML = '';
+
+            if (data.recommendations && data.recommendations.length > 0) {
+                data.recommendations.forEach(menu => {
+                    recContainer.insertAdjacentHTML('beforeend', createMenuCard(menu, true));
+                });
             } else {
-                allContainer.innerHTML = '<div class="col-span-full py-6 text-center text-gray-400 text-sm">Katalog menu masih kosong.</div>';
+                recContainer.innerHTML = '<div class="col-span-full py-6 text-gray-400 text-sm">Belum ada rekomendasi dari AI.</div>';
             }
+        }
 
-            const meta = data.all_menus;
-            document.getElementById('paginationInfo').innerText = `Menampilkan ${meta.from || 0} - ${meta.to || 0} dari total ${meta.total} menu`;
-            
-            const controls = document.getElementById('paginationControls');
-            controls.innerHTML = '';
+        // ================= ALL MENU =================
+        const allContainer = document.getElementById('allMenuGrid');
+        const menuData = data.all_menus.data;
 
-            if (meta.current_page > 1) {
-                controls.innerHTML += `<button onclick="loadMenus(${meta.current_page - 1})" class="px-4 py-2 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 text-xs font-bold transition-colors shadow-sm">Sebelumnya</button>`;
-            }
-            
-            controls.innerHTML += `<span class="px-4 py-2 text-emerald-700 text-sm font-black">${meta.current_page} <span class="text-gray-400 text-xs font-medium mx-1">dari</span> ${meta.last_page}</span>`;
-            
-            if (meta.current_page < meta.last_page) {
-                controls.innerHTML += `<button onclick="loadMenus(${meta.current_page + 1})" class="px-4 py-2 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-100 text-xs font-bold transition-colors shadow-sm">Selanjutnya</button>`;
-            }
+        allContainer.innerHTML = '';
 
-        } catch (e) {
-            console.error("Gagal memuat katalog", e);
-            if(page === 1) document.getElementById('recommendationGrid').innerHTML = '<div class="col-span-full text-red-500 text-sm">Gagal terhubung ke server.</div>';
+        if (menuData.length > 0) {
+            menuData.forEach(menu => {
+                allContainer.insertAdjacentHTML('beforeend', createMenuCard(menu, false));
+            });
+        } else {
+            allContainer.innerHTML = '<div class="col-span-full py-6 text-center text-gray-400 text-sm">Katalog menu masih kosong.</div>';
+        }
+
+        // ================= PAGINATION =================
+        const meta = data.all_menus;
+
+        document.getElementById('paginationInfo').innerText =
+            `Menampilkan ${meta.from || 0} - ${meta.to || 0} dari total ${meta.total} menu`;
+
+        const controls = document.getElementById('paginationControls');
+        controls.innerHTML = '';
+
+        if (meta.current_page > 1) {
+            controls.innerHTML += `
+                <button onclick="loadMenus(${meta.current_page - 1})"
+                    class="px-4 py-2 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 text-xs font-bold">
+                    Sebelumnya
+                </button>`;
+        }
+
+        controls.innerHTML += `
+            <span class="px-4 py-2 text-emerald-700 text-sm font-black">
+                ${meta.current_page}
+                <span class="text-gray-400 text-xs mx-1">dari</span>
+                ${meta.last_page}
+            </span>
+        `;
+
+        if (meta.current_page < meta.last_page) {
+            controls.innerHTML += `
+                <button onclick="loadMenus(${meta.current_page + 1})"
+                    class="px-4 py-2 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-100 text-xs font-bold">
+                    Selanjutnya
+                </button>`;
+        }
+
+    } catch (e) {
+        console.error("Gagal memuat katalog", e);
+
+        if (page === 1) {
+            document.getElementById('recommendationGrid').innerHTML =
+                '<div class="col-span-full text-red-500 text-sm">Gagal terhubung ke server.</div>';
         }
     }
+}
 
+    function applyFilter() {
     loadMenus(1);
+}
+
+    const recWrapper = document.getElementById("recommendationGrid");
+
+document.getElementById("recNext").onclick = () => {
+    recWrapper.scrollBy({ left: 900, behavior: "smooth" });
+};
+
+document.getElementById("recPrev").onclick = () => {
+    recWrapper.scrollBy({ left: -900, behavior: "smooth" });
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadMenus(1);
+});
+
 </script>
+
+<style>
+#recommendationGrid {
+    scroll-snap-type: x mandatory;
+}
+
+#recommendationGrid > div {
+    min-width: 300px;   /* card BESAR */
+    max-width: 300px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+}
+
+#recommendationGrid::-webkit-scrollbar {
+    display: none;
+}
+
+/* efek hover halus */
+#recommendationGrid > div:hover {
+    transform: translateY(-4px);
+    transition: 0.2s;
+}
+</style>
 @endsection

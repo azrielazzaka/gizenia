@@ -50,7 +50,30 @@ class UserMenuController extends Controller
         }
 
         // 4. Katalog Semua Menu (Hanya diambil 12 per halaman untuk Paginasi)
-        $paginatedMenus = FoodMenu::paginate(12);
+       $query = FoodMenu::query();
+       
+
+// 🔎 SEARCH (nama menu)
+if ($request->has('search') && $request->search != '') {
+    $query->where('name', 'like', '%' . $request->search . '%');
+}
+
+// 🔤 SORT ABJAD
+if ($request->sort == 'az') {
+    $query->orderBy('name', 'asc');
+} elseif ($request->sort == 'za') {
+    $query->orderBy('name', 'desc');
+}
+
+// 🔥 SORT KALORI
+if ($request->sort == 'cal_low') {
+    $query->orderBy('calories', 'asc');
+} elseif ($request->sort == 'cal_high') {
+    $query->orderBy('calories', 'desc');
+}
+
+// PAGINASI
+$paginatedMenus = $query->paginate(12)->appends($request->all());
 
         return response()->json([
             'user_stats' => [

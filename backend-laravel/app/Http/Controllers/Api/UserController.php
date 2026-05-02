@@ -69,5 +69,24 @@ class UserController extends Controller
         return response()->json(['message' => 'Pengguna berhasil dihapus!']);
     }
 
-    
+   public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|min:6',
+    ]);
+
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => $request->password,
+        'role' => 'admin'
+    ]);
+
+    return response()->json([
+        'message' => 'Admin berhasil dibuat',
+        'user' => $user
+    ], 201);
+}
 }

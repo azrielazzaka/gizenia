@@ -38,7 +38,7 @@ try:
 
         # 4. LATIH MODEL MACHINE LEARNING (K-Nearest Neighbors)
         features = df[['calories', 'protein', 'fat', 'carbohydrates']]
-        knn_model = NearestNeighbors(n_neighbors=3, algorithm='auto')
+        knn_model = NearestNeighbors(n_neighbors=6, algorithm='auto')
         knn_model.fit(features)
         
         print(f"✅ MongoDB Atlas Terhubung! Model AI Siap dengan {len(df)} menu.")
@@ -57,51 +57,63 @@ def home():
 @app.route('/api/predict/recommendation', methods=['POST'])
 def get_recommendation():
     try:
-        data = request.get_json()
-        if not data: return jsonify({"error": "Data kosong"}), 400
-            
-        target_cal = data.get('target_calories', 0)
-        target_pro = data.get('target_protein', 0)
-        target_fat = data.get('target_fat', 0)
-        target_carbs = data.get('target_carbs', 0)
+        data = request.get_json() or {}
 
-        user_target = [[target_cal, target_pro, target_fat, target_carbs]]
+        # 🔁 SUPPORT DUA FORMAT (AMAN)
+        if 'current' in data:
+            target_cal = data['current'].get('calories', 0)
+            target_pro = data['current'].get('protein', 0)
+            target_fat = data['current'].get('fat', 0)
+            target_carbs = data['current'].get('carbs', 0)
+        else:
+            target_cal = data.get('target_calories', 0)
+            target_pro = data.get('target_protein', 0)
+            target_fat = data.get('target_fat', 0)
+            target_carbs = data.get('target_carbs', 0)
 
-        # JIKA DATABASE KOSONG, KEMBALIKAN ARRAY KOSONG AGAR LARAVEL TIDAK CRASH
+        user_target = pd.DataFrame([[
+            target_cal, target_pro, target_fat, target_carbs
+        ]], columns=['calories', 'protein', 'fat', 'carbohydrates'])
+
+        # ❗ Jika model belum siap
         if 'knn_model' not in globals():
-            return jsonify({"status": "success", "target_diminta": user_target[0], "rekomendasi": []}), 200
+            return jsonify({
+                "status": "success",
+                "target_diminta": user_target.iloc[0].to_dict(),
+                "rekomendasi": []
+            }), 200
 
-        # AI MENCARI 3 MENU TERDEKAT
-        distances, indices = knn_model.kneighbors(user_target)
+        distances, indices = knn_model.kneighbors(user_target, n_neighbors=6)
 
         recommended_menus = []
-        for i in range(len(indices[0])):
-            idx = indices[0][i]
+        for i, idx in enumerate(indices[0]):
             menu = df.iloc[idx]
-            
-            match_score = round(max(0, 100 - (distances[0][i] / 5)), 1) 
+            match_score = round(max(0, 100 - (distances[0][i] / 5)), 1)
 
             recommended_menus.append({
-                "id": menu['_id'], 
+                "id": menu['_id'],
                 "name": menu.get('name', 'Menu Tanpa Nama'),
                 "category": menu.get('category', 'Umum'),
                 "calories": float(menu['calories']),
                 "protein": float(menu['protein']),
                 "fat": float(menu['fat']),
                 "carbohydrates": float(menu['carbohydrates']),
-                "image": (menu.get('image', '')),
+                "image": menu.get('image', ''),
                 "serving_size_g": float(menu['serving_size_g']),
                 "match_score": match_score
             })
 
         return jsonify({
             "status": "success",
-            "target_diminta": user_target[0],
+            "target_diminta": user_target.iloc[0].to_dict(),
             "rekomendasi": recommended_menus
         }), 200
-        
+
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
     
 # ==========================================
 # ENDPOINT EVALUATOR "ISI PIRINGKU"

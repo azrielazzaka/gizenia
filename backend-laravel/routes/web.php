@@ -8,6 +8,11 @@ Route::view('/', 'welcome')->name('home');
 // Auth Routes
 Route::view('/login', 'auth.login')->name('login');
 Route::view('/register', 'auth.register')->name('register');
+Route::view('/forgot-password', 'auth.forgot-password')->name('forgot.password');
+Route::view('/reset-password', 'auth.reset-password')->name('reset.password');
+    
+// Halaman Profil Pengguna
+Route::view('/profile', 'profile')->name('profile');
 
 // Admin Routes
 Route::prefix('admin')->group(function () {
@@ -16,6 +21,7 @@ Route::prefix('admin')->group(function () {
     Route::view('/menu', 'admin.menu')->name('admin.menu');
     Route::view('/distribusi', 'admin.distribusi')->name('admin.distribusi');
     Route::view('/laporan', 'admin.laporan')->name('admin.laporan');
+    Route::view('/api-docs', 'admin.api-docs')->name('admin.api');
 });
 
 // User Routes

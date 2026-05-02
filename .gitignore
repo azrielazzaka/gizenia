@@ -1,3 +1,7 @@
+# Python environment & cache
+ai-engine/venv/
+*.pyc
+__pycache__/
 /venv
 /__pycache__
 /node_modules

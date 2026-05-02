@@ -6,6 +6,12 @@
         <h2 class="text-2xl font-bold text-gray-900">Manajemen Pengguna</h2>
         <p class="text-gray-500 text-sm mt-1">Kelola data administrator dan penerima nutrisi.</p>
     </div>
+
+    
+    <button onclick="toggleModal('addAdminModal')"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow">
+        + Tambah Admin
+    </button>
 </div>
 
 <div class="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50">
@@ -47,6 +53,52 @@
         <div id="paginationControls" class="flex space-x-1"></div>
     </div>
 </div>
+
+<div id="addAdminModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Tambah Admin Baru</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Buat akun administrator sistem</p>
+            </div>
+            <button type="button" onclick="toggleModal('addAdminModal')" class="text-gray-400 hover:text-red-500 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div id="addAdminAlert" class="hidden mx-6 mt-4 p-3 rounded-xl text-sm"></div>
+
+        <form id="addAdminForm" class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                <input type="text" id="a_name" required placeholder="Nama Anda" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="a_email" required placeholder="email@domain.com" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                <div class="relative">
+    <input type="password" id="a_password" required placeholder="Minimal 6 karakter"
+        class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+</div>
+
+<div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
+    <button type="button" onclick="toggleModal('addAdminModal')"
+        class="px-5 py-2 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+        Batal
+    </button>
+
+    <button type="submit" id="btnSubmitAdmin"
+        class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-md">
+        Buat Akun Admin
+    </button>
+</div>
+        </form>
+    </div>
+</div>
+
 
 <div id="editUserModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
@@ -308,5 +360,38 @@
     }
 
     fetchUsers(1);
+
+    document.getElementById('addAdminForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const payload = {
+        name: document.getElementById('a_name').value,
+        email: document.getElementById('a_email').value,
+        password: document.getElementById('a_password').value,
+        role: 'admin'
+    };
+
+    try {
+        const res = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            toggleModal('addAdminModal'); // tutup modal
+            document.getElementById('addAdminForm').reset(); // kosongkan form
+            fetchUsers(1); // refresh table
+        } else {
+            const data = await res.json();
+alert(data.message || data.error || JSON.stringify(data));
+        }
+    } catch (err) {
+        alert('Server error');
+    }
+});
 </script>
 @endsection
