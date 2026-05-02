@@ -13,12 +13,27 @@
             <h3 class="font-bold text-lg text-gray-900 mb-4">Tambahkan Makanan</h3>
             
             <div class="flex flex-col md:flex-row gap-4 mb-2">
-                <div class="flex-1">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Pilih dari Database</label>
-                    <select id="menuSelect" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow">
-                        <option value="">Memuat menu...</option>
-                    </select>
-                </div>
+                <div class="relative flex-1">
+    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+        Pilih dari Database
+    </label>
+
+    <input
+        type="text"
+        id="foodSearch"
+        placeholder="Cari makanan (contoh: ayam)"
+        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl
+               text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+        oninput="filterFoods()"
+        onfocus="showDropdown()"
+        autocomplete="off"
+    >
+
+    <div id="foodDropdown"
+        class="hidden absolute z-50 mt-2 w-full bg-white border border-gray-200
+               rounded-xl shadow-lg max-h-60 overflow-y-auto">
+    </div>
+</div>
                 <div class="w-full md:w-1/3">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Porsi (Gram)</label>
                     <input type="number" id="portionInput" value="100" min="1" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow">
@@ -99,232 +114,244 @@
 </div>
 
 <script>
-    const token = localStorage.getItem('jwt_token');
-    if (!token) window.location.href = '/login';
+/* ===============================
+   AUTH
+================================ */
+const token = localStorage.getItem('jwt_token');
+if (!token) window.location.href = '/login';
 
-    let allMenus = [];
-    let userProfile = {};
-    let targetCalories = 0;
-    let foodCart = [];
+/* ===============================
+   GLOBAL STATE
+================================ */
+let allMenus = [];
+let targetCalories = 0;
+let foodCart = [];
+let selectedMenu = null;
 
-    // FUNGSI KONTROL MODAL KUSTOM
-    function showCustomAlert(title, message) {
-        document.getElementById('customAlertTitle').innerText = title;
-        document.getElementById('customAlertMessage').innerText = message;
-        
-        const modal = document.getElementById('customAlertModal');
-        const content = document.getElementById('customAlertContent');
+/* ===============================
+   CUSTOM ALERT
+================================ */
+function showCustomAlert(title, message) {
+    document.getElementById('customAlertTitle').innerText = title;
+    document.getElementById('customAlertMessage').innerText = message;
 
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            content.classList.remove('scale-95');
-        }, 10);
+    const modal = document.getElementById('customAlertModal');
+    const content = document.getElementById('customAlertContent');
+
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+}
+
+function closeCustomAlert() {
+    const modal = document.getElementById('customAlertModal');
+    const content = document.getElementById('customAlertContent');
+
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+/* ===============================
+   INIT TRACKER
+================================ */
+async function initTracker() {
+    try {
+        const resUser = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = await resUser.json();
+
+        const w = user.weight || 40;
+        const h = user.height || 140;
+        const a = user.age || 12;
+
+        const bmr = (10 * w) + (6.25 * h) - (5 * a) + 5;
+        const tdee = bmr * 1.375;
+        targetCalories = tdee * 0.35;
+
+        document.getElementById('targetMeal').innerText = Math.round(targetCalories);
+
+        const resMenu = await fetch('/api/menus', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        allMenus = await resMenu.json();
+
+    } catch (e) {
+        console.error("Init error", e);
+    }
+}
+
+/* ===============================
+   FOOD SEARCH DROPDOWN
+================================ */
+function filterFoods() {
+    const keyword = document.getElementById('foodSearch').value.toLowerCase();
+    const dropdown = document.getElementById('foodDropdown');
+    dropdown.innerHTML = '';
+
+    if (!keyword) {
+        dropdown.classList.add('hidden');
+        return;
     }
 
-    function closeCustomAlert() {
-        const modal = document.getElementById('customAlertModal');
-        const content = document.getElementById('customAlertContent');
+    const results = allMenus.filter(m =>
+        m.name.toLowerCase().includes(keyword)
+    );
 
-        modal.classList.add('opacity-0');
-        content.classList.add('scale-95');
+    results.forEach(menu => {
+        const item = document.createElement('div');
+        item.className = "px-4 py-3 cursor-pointer hover:bg-emerald-50";
+        item.innerHTML = `
+            <div class="font-semibold text-gray-800">${menu.name}</div>
+            <div class="text-xs text-gray-400">${menu.calories} kkal / ${menu.serving_size_g || 100}g</div>
+        `;
+        item.onclick = () => selectFood(menu);
+        dropdown.appendChild(item);
+    });
 
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 300);
+    dropdown.classList.remove('hidden');
+}
+
+function showDropdown() {
+    if (document.getElementById('foodDropdown').innerHTML !== '') {
+        document.getElementById('foodDropdown').classList.remove('hidden');
+    }
+}
+
+function selectFood(menu) {
+    selectedMenu = menu;
+    document.getElementById('foodSearch').value = menu.name;
+    document.getElementById('foodDropdown').classList.add('hidden');
+}
+
+/* ===============================
+   ADD FOOD
+================================ */
+function addFoodToCart() {
+    const portion = parseFloat(document.getElementById('portionInput').value);
+
+    if (!selectedMenu) {
+        showCustomAlert("Pilih Makanan", "Silakan pilih makanan dari hasil pencarian.");
+        return;
     }
 
-    // 1. Ambil Profil & Hitung Target (BMR & TDEE)
-    async function initTracker() {
-        try {
-            const resUser = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` }});
-            const user = await resUser.json();
-            
-            const w = user.weight || 40;
-            const h = user.height || 140;
-            const a = user.age || 12;
-            
-            const bmr = (10 * w) + (6.25 * h) - (5 * a) + 5;
-            const tdee = bmr * 1.375;
-            targetCalories = tdee * 0.35; 
-            
-            document.getElementById('targetMeal').innerText = Math.round(targetCalories);
-
-            const resMenu = await fetch('/api/menus', { headers: { 'Authorization': `Bearer ${token}` }});
-            allMenus = await resMenu.json();
-            
-            const select = document.getElementById('menuSelect');
-            select.innerHTML = '<option value="">-- Pilih Makanan --</option>';
-            allMenus.forEach(m => {
-                select.innerHTML += `<option value="${m._id || m.id}">${m.name} (${m.serving_size_g}g per porsi standar)</option>`;
-            });
-
-        } catch(e) { console.error("Error init tracker"); }
+    if (!portion || portion <= 0) {
+        showCustomAlert("Porsi Tidak Valid", "Porsi harus lebih dari 0 gram.");
+        return;
     }
 
-    // 2. Tambah ke Keranjang
-    function addFoodToCart() {
-        const select = document.getElementById('menuSelect');
-        const portion = document.getElementById('portionInput').value;
-        const menuId = select.value;
+    const ratio = portion / (selectedMenu.serving_size_g || 100);
 
-        if(!menuId) {
-            showCustomAlert("Pilih Makanan Dulu!", "Anda belum memilih makanan dari daftar. Silakan pilih makanan sebelum menekan tombol tambah.");
-            return;
-        }
-        if(portion <= 0) {
-            showCustomAlert("Porsi Tidak Valid", "Porsi harus lebih dari 0 gram. Masukkan jumlah gramasi yang benar.");
-            return;
-        }
+    foodCart.push({
+        id: Date.now(),
+        name: selectedMenu.name,
+        weight: portion,
+        cals: (selectedMenu.calories || 0) * ratio,
+        pro: (selectedMenu.protein || 0) * ratio,
+        carbs: (selectedMenu.carbohydrates || 0) * ratio,
+        fat: (selectedMenu.fat || 0) * ratio
+    });
 
-        const menuData = allMenus.find(m => (m._id === menuId || m.id === menuId));
-        if(!menuData) return;
+    selectedMenu = null;
+    document.getElementById('foodSearch').value = '';
+    document.getElementById('foodDropdown').classList.add('hidden');
 
-        const ratio = parseFloat(portion) / parseFloat(menuData.serving_size_g || 100);
-        
-        foodCart.push({
-            id: Date.now(),
-            name: menuData.name,
-            weight: portion,
-            cals: parseFloat(menuData.calories || 0) * ratio,
-            pro: parseFloat(menuData.protein || 0) * ratio,
-            carbs: parseFloat(menuData.carbohydrates || 0) * ratio,
-            fat: parseFloat(menuData.fat || 0) * ratio
+    renderCart();
+}
+
+/* ===============================
+   RENDER CART
+================================ */
+function renderCart() {
+    const list = document.getElementById('foodCartList');
+    list.innerHTML = '';
+
+    let totCals = 0, totPro = 0, totCarbs = 0, totFat = 0;
+
+    if (foodCart.length === 0) {
+        list.innerHTML = '<li class="py-8 text-center text-gray-400 text-sm">Piring masih kosong.</li>';
+        evaluateNutritionWithAI(0);
+        return;
+    }
+
+    foodCart.forEach(item => {
+        totCals += item.cals;
+        totPro += item.pro;
+        totCarbs += item.carbs;
+        totFat += item.fat;
+
+        list.innerHTML += `
+            <li class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
+                <div>
+                    <h4 class="font-bold">${item.name}</h4>
+                    <p class="text-xs text-gray-500">${item.weight}g • ${Math.round(item.cals)} kkal</p>
+                </div>
+                <button onclick="removeFood(${item.id})" class="text-red-500">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </li>
+        `;
+    });
+
+    document.getElementById('currentCals').innerText = Math.round(totCals) + " kkal";
+    document.getElementById('currentPro').innerText = Math.round(totPro) + "g";
+    document.getElementById('currentCarbs').innerText = Math.round(totCarbs) + "g";
+    document.getElementById('currentFat').innerText = Math.round(totFat) + "g";
+
+    document.getElementById('barCals').style.width =
+        Math.min((totCals / targetCalories) * 100, 100) + "%";
+
+    evaluateNutritionWithAI(totCals);
+}
+
+function removeFood(id) {
+    foodCart = foodCart.filter(item => item.id !== id);
+    renderCart();
+}
+
+
+async function evaluateNutritionWithAI(totalCals) {
+    const title = document.getElementById('verdictTitle');
+    const desc = document.getElementById('verdictDesc');
+
+    if (totalCals === 0) {
+        title.innerText = "Belum Ada Data";
+        desc.innerText = "Tambahkan makanan untuk melihat analisis AI.";
+        return;
+    }
+
+    title.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menganalisis...';
+    desc.innerText = "AI sedang mengevaluasi nutrisi.";
+
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/predict/evaluation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                foods: foodCart.map(f => ({
+                    calories: f.cals,
+                    protein: f.pro,
+                    carbohydrates: f.carbs,
+                    fat: f.fat
+                }))
+            })
         });
 
-        renderCart();
+        const data = await response.json();
+        title.innerText = "AI: " + data.evaluation.verdict;
+        desc.innerHTML = data.evaluation.messages.join(" ");
+
+    } catch {
+        title.innerText = "AI Offline";
+        desc.innerText = "Server AI belum aktif.";
     }
+}
 
-    // 3. Render Keranjang & Hitung Total
-    function renderCart() {
-        const list = document.getElementById('foodCartList');
-        list.innerHTML = '';
 
-        let totCals = 0, totPro = 0, totCarbs = 0, totFat = 0;
-
-        if(foodCart.length === 0) {
-            list.innerHTML = '<li class="py-8 text-center text-gray-400 text-sm">Piring masih kosong.</li>';
-            evaluateNutritionWithAI(0); // Panggil AI
-            return;
-        }
-
-        foodCart.forEach(item => {
-            totCals += item.cals; totPro += item.pro; totCarbs += item.carbs; totFat += item.fat;
-
-            list.innerHTML += `
-                <li class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <div>
-                        <h4 class="font-bold text-gray-900">${item.name}</h4>
-                        <p class="text-xs text-gray-500 mt-1"><span class="font-bold text-emerald-600">${item.weight}g</span> • ${Math.round(item.cals)} kkal</p>
-                    </div>
-                    <button onclick="removeFood(${item.id})" class="w-8 h-8 rounded-full bg-white text-red-500 shadow-sm border border-gray-200 flex items-center justify-center hover:bg-red-50 transition-colors">
-                        <i class="fas fa-trash-alt text-xs"></i>
-                    </button>
-                </li>
-            `;
-        });
-
-        document.getElementById('currentCals').innerText = `${Math.round(totCals)} kkal`;
-        document.getElementById('currentPro').innerText = `${Math.round(totPro)}g`;
-        document.getElementById('currentCarbs').innerText = `${Math.round(totCarbs)}g`;
-        document.getElementById('currentFat').innerText = `${Math.round(totFat)}g`;
-
-        let percent = (totCals / targetCalories) * 100;
-        if(percent > 100) percent = 100;
-        document.getElementById('barCals').style.width = `${percent}%`;
-
-        // PANGGIL AI SETIAP KALI KERANJANG BERUBAH
-        evaluateNutritionWithAI(totCals);
-    }
-
-    // 4. Hapus Makanan
-    function removeFood(id) {
-        foodCart = foodCart.filter(item => item.id !== id);
-        renderCart();
-    }
-
-    // 5. EVALUASI DENGAN AI (PYTHON FLASK)
-    async function evaluateNutritionWithAI(totalCals) {
-        const box = document.getElementById('aiVerdictBox');
-        const icon = document.getElementById('verdictIcon');
-        const title = document.getElementById('verdictTitle');
-        const desc = document.getElementById('verdictDesc');
-
-        // Jika piring kosong
-        if(totalCals === 0 || foodCart.length === 0) {
-            box.className = "mt-8 bg-white text-emerald-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10";
-            icon.innerHTML = '<i class="fas fa-robot text-gray-400 text-xl"></i>';
-            icon.className = "w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2";
-            title.innerText = "Belum Ada Data";
-            desc.innerText = "Tambahkan makanan untuk melihat apakah piringmu sudah seimbang.";
-            return;
-        }
-
-        // Tampilkan status Loading
-        title.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menganalisis...';
-        desc.innerText = "AI sedang membaca komposisi makronutrisi piring Anda.";
-
-        try {
-            // Sesuaikan variabel keranjang untuk dikirim ke Python
-            const payloadFoods = foodCart.map(item => ({
-                calories: item.cals,
-                protein: item.pro,
-                carbohydrates: item.carbs,
-                fat: item.fat
-            }));
-
-            // Tembak ke API Flask Python
-            const response = await fetch('http://127.0.0.1:5000/api/predict/evaluation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ foods: payloadFoods })
-            });
-
-            const aiData = await response.json();
-
-            if (aiData.status === 'success') {
-                const verdict = aiData.evaluation.verdict;
-                let messages = aiData.evaluation.messages.join(" ");
-
-                // Ubah Warna Box berdasarkan Vonis dari Python
-                if (verdict === "Seimbang") {
-                    box.className = "mt-8 bg-white text-emerald-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 scale-105 border-b-4 border-emerald-500";
-                    icon.innerHTML = '<i class="fas fa-check-circle text-emerald-500 text-2xl"></i>';
-                    icon.className = "w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2";
-                } else if (verdict.includes("Tinggi") || verdict.includes("Kurang")) {
-                    box.className = "mt-8 bg-white text-orange-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 border-b-4 border-orange-500";
-                    icon.innerHTML = '<i class="fas fa-exclamation-triangle text-orange-500 text-xl"></i>';
-                    icon.className = "w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2";
-                }
-
-                // Kalkulasi Kalori (Digabung dengan hasil Makronutrisi Python)
-                const lowerBound = targetCalories * 0.8; 
-                const upperBound = targetCalories * 1.2; 
-
-                if (totalCals < lowerBound) {
-                    messages += "<br><br><b>Catatan Kalori:</b> Porsi ini belum cukup memenuhi kebutuhan energi Anda.";
-                } else if (totalCals > upperBound) {
-                    messages += "<br><br><b>Catatan Kalori:</b> Hati-hati! Kalori porsi ini melebihi target Anda.";
-                }
-
-                // Tampilkan Hasil Akhir
-                title.innerText = "AI: " + verdict;
-                desc.innerHTML = messages;
-
-            } else {
-                title.innerText = "AI Error";
-                desc.innerText = aiData.message || "Terdapat kesalahan saat menganalisis.";
-            }
-
-        } catch (error) {
-            box.className = "mt-8 bg-white text-red-700 rounded-2xl p-4 shadow-lg text-center transform transition-all relative z-10 border-b-4 border-red-500";
-            icon.innerHTML = '<i class="fas fa-wifi text-red-500 text-xl"></i>';
-            icon.className = "w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2";
-            title.innerText = "Koneksi Terputus";
-            desc.innerText = "Gagal terhubung ke AI. Pastikan server Python (Flask) sudah menyala di terminal.";
-        }
-    }
-
-    initTracker();
+initTracker();
 </script>
 @endsection

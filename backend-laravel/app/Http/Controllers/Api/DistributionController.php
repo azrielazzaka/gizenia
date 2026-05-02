@@ -10,8 +10,14 @@ class DistributionController extends Controller
 {
     public function index(Request $request)
     {
-        $distributions = Distribution::orderBy('created_at', 'desc')->paginate(5);
-        return response()->json($distributions);
+        $query = Distribution::query();
+
+    // FILTER BY DATE
+    if ($request->has('date')) {
+        $query->where('distribution_date', $request->date);
+    }
+
+    return $query->paginate(5);
     }
 
     public function store(Request $request)

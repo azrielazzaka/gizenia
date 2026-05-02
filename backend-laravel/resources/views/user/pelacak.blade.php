@@ -19,13 +19,23 @@
         </div>
         
         <div class="flex space-x-3 mb-6 bg-gray-50 p-3 rounded-2xl border border-gray-100">
-            <select id="foodSelector" class="flex-1 bg-white border border-gray-200 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="">Memuat data makanan dari server...</option>
-            </select>
-            <button onclick="addFoodToPlate()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-colors shadow-sm">
-                <i class="fas fa-plus"></i> Tambah
-            </button>
-        </div>
+            <div class="relative flex-1">
+    <input
+        type="text"
+        id="foodSearch"
+        placeholder="Cari makanan (contoh: ayam)"
+        class="w-full bg-white border border-gray-200 text-sm rounded-xl px-4 py-2.5
+               focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        oninput="filterFoods()"
+        onfocus="showDropdown()"
+        autocomplete="off"
+    >
+
+    <!-- Dropdown hasil search -->
+    <div id="foodDropdown"
+        class="hidden absolute z-50 mt-2 w-full bg-white border border-gray-200
+               rounded-xl shadow-lg max-h-56 overflow-y-auto">
+    </div>
 
         <div class="flex-1 overflow-y-auto">
             <div id="plateContainer" class="space-y-3">
@@ -120,47 +130,16 @@
 
     // 1. Ambil Katalog Menu dari Laravel untuk pilihan Dropdown
     async function fetchFoodCatalog() {
-        try {
-            const res = await fetch('/api/user/menus', { headers: { 'Authorization': `Bearer ${token}` }});
-            const data = await res.json();
-            availableFoods = data.all_menus.data; 
-            
-            const selector = document.getElementById('foodSelector');
-            selector.innerHTML = '<option value="" disabled selected>-- Pilih Makanan ke Piring --</option>';
-            
-            availableFoods.forEach((food, index) => {
-                selector.innerHTML += `<option value="${index}">${food.name} (${food.calories} kkal / ${food.serving_size_g || 100}g)</option>`;
-            });
-        } catch (e) {
-            document.getElementById('foodSelector').innerHTML = '<option value="">Gagal memuat data menu.</option>';
-        }
+    try {
+        const res = await fetch('/api/user/menus', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        availableFoods = data.all_menus.data;
+    } catch (e) {
+        console.error('Gagal memuat data makanan');
     }
-
-    // 2. Tambahkan makanan dari dropdown ke array myPlate
-    function addFoodToPlate() {
-        const selector = document.getElementById('foodSelector');
-        const selectedIndex = selector.value;
-        
-        // JIKA KOSONG, PANGGIL POP-UP KUSTOM (BUKAN ALERT)
-        if (selectedIndex === "") {
-            showWarningModal("Pilih Makanan Dulu!", "Anda belum memilih makanan dari daftar. Silakan pilih makanan sebelum menekan tombol tambah.");
-            return;
-        }
-
-        const selectedFood = availableFoods[selectedIndex];
-        myPlate.push(selectedFood);
-        renderPlate();
-        
-        selector.value = "";
-        resetAIUI();
-    }
-
-    // Menghapus makanan dari piring
-    function removeFood(index) {
-        myPlate.splice(index, 1);
-        renderPlate();
-        resetAIUI();
-    }
+}
 
     // 3. Render daftar HTML makanan di Piring
     function renderPlate() {
@@ -288,6 +267,65 @@
 
         document.getElementById('aiVerdictBox').classList.add('hidden');
     }
+
+function filterFoods() {
+    const keyword = document.getElementById('foodSearch').value.toLowerCase();
+    const dropdown = document.getElementById('foodDropdown');
+    dropdown.innerHTML = '';
+
+    if (!keyword) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+
+    const results = availableFoods.filter(food =>
+        food.name.toLowerCase().includes(keyword)
+    );
+
+    if (results.length === 0) {
+        dropdown.innerHTML = `
+            <div class="px-4 py-3 text-sm text-gray-400">
+                Makanan tidak ditemukan
+            </div>`;
+    } else {
+        results.forEach(food => {
+            dropdown.innerHTML += `
+                <div
+                    class="px-4 py-3 text-sm cursor-pointer hover:bg-emerald-50"
+                    onclick="selectFood(${availableFoods.indexOf(food)})">
+                    <div class="font-semibold text-gray-800">${food.name}</div>
+                    <div class="text-xs text-gray-400">
+                        ${food.calories} kkal / ${food.serving_size_g || 100}g
+                    </div>
+                </div>`;
+        });
+    }
+
+    dropdown.classList.remove('hidden');
+}
+
+function selectFood(index) {
+    const food = availableFoods[index];
+    myPlate.push(food);
+    renderPlate();
+    resetAIUI();
+
+    document.getElementById('foodSearch').value = '';
+    document.getElementById('foodDropdown').classList.add('hidden');
+}
+
+function showDropdown() {
+    if (document.getElementById('foodSearch').value !== '') {
+        document.getElementById('foodDropdown').classList.remove('hidden');
+    }
+}
+
+// klik di luar → dropdown nutup
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('#foodSearch')) {
+        document.getElementById('foodDropdown').classList.add('hidden');
+    }
+});
 
     fetchFoodCatalog();
 
