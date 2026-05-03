@@ -346,7 +346,7 @@ function closeModal() {
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm">Vitality Assistant</h4>
+                        <h4 class="font-bold text-sm">GIZENIA AI</h4>
                         <p class="text-[10px] text-emerald-100 flex items-center"><span class="w-1.5 h-1.5 bg-green-300 rounded-full mr-1.5 animate-pulse"></span> Online</p>
                     </div>
                 </div>
@@ -361,7 +361,7 @@ function closeModal() {
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                     </div>
                     <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-600 leading-relaxed">
-                        Halo! Saya asisten AI VitalityCore. Ada yang bisa saya bantu mengenai nutrisi atau pendaftaran hari ini? 🌱
+                        Halo! Saya GIZENIA AI. Ada yang bisa saya bantu mengenai nutrisi atau pendaftaran hari ini? 🌱
                     </div>
                 </div>
             </div>
@@ -398,7 +398,6 @@ function closeModal() {
                 isChatOpen = !isChatOpen;
                 if (isChatOpen) {
                     chatWindow.classList.remove('hidden');
-                    // setTimeout trick for transition to trigger
                     setTimeout(() => {
                         chatWindow.classList.remove('scale-95', 'opacity-0');
                         chatWindow.classList.add('scale-100', 'opacity-100', 'flex');
@@ -416,12 +415,12 @@ function closeModal() {
             chatToggleBtn.addEventListener('click', toggleChat);
             closeChat.addEventListener('click', toggleChat);
 
-            // Fungsi Kirim Pesan
-            function sendMessage() {
+            // MENGIRIM PESAN KE PYTHON (AI)
+            async function sendMessage() {
                 const message = chatInput.value.trim();
                 if (!message) return;
 
-                // Tambahkan pesan User
+                // 1. Tambahkan pesan User ke layar
                 const userBubble = `
                 <div class="flex items-end justify-end max-w-[85%] self-end">
                     <div class="bg-emerald-600 text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm leading-relaxed">
@@ -432,20 +431,63 @@ function closeModal() {
                 chatInput.value = '';
                 scrollToBottom();
 
-                // Simulasi AI Mengetik & Membalas
-                setTimeout(() => {
-                    const botBubble = `
+                // 2. Tampilkan indikator "Mengetik..." sementara AI berpikir
+                const loadingId = 'loading-' + Date.now();
+                const loadingBubble = `
+                <div id="${loadingId}" class="flex items-start max-w-[85%]">
+                    <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center shrink-0 mr-2 mt-1">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-xs text-gray-500 italic">
+                        AI sedang mengetik...
+                    </div>
+                </div>`;
+                chatMessages.insertAdjacentHTML('beforeend', loadingBubble);
+                scrollToBottom();
+
+                try {
+                    // 3. Tembak API Chatbot Python
+                    const response = await fetch('http://127.0.0.1:5000/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+                    
+                    // 4. Hapus tulisan "Mengetik..."
+                    document.getElementById(loadingId).remove();
+
+                    // 5. Tampilkan balasan asli dari AI Python
+                    if (data.status === 'success') {
+                        const botBubble = `
+                        <div class="flex items-start max-w-[85%]">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mr-2 mt-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                            </div>
+                            <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-600 leading-relaxed">
+                                ${data.reply}
+                            </div>
+                        </div>`;
+                        chatMessages.insertAdjacentHTML('beforeend', botBubble);
+                    } else {
+                        throw new Error(data.message || "Error server");
+                    }
+
+                } catch (error) {
+                    // Jika Python belum nyala / error
+                    document.getElementById(loadingId).remove();
+                    const errorBubble = `
                     <div class="flex items-start max-w-[85%]">
-                        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mr-2 mt-1">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                        </div>
-                        <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-600 leading-relaxed">
-                            Terima kasih atas pesan Anda! Saat ini saya masih dalam versi simulasi awal. Silakan klik tombol <strong>"Mulai Sekarang"</strong> untuk membuat akun dan menggunakan fitur penuhmnya! ✨
+                        <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mr-2 mt-1">!</div>
+                        <div class="bg-red-50 border border-red-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-red-600 leading-relaxed">
+                            Aduh, saya tidak bisa terhubung ke server utama. Pastikan terminal Python (Flask) sudah dinyalakan ya!
                         </div>
                     </div>`;
-                    chatMessages.insertAdjacentHTML('beforeend', botBubble);
-                    scrollToBottom();
-                }, 1000);
+                    chatMessages.insertAdjacentHTML('beforeend', errorBubble);
+                }
+                
+                scrollToBottom();
             }
 
             // Scroll ke bawah saat ada pesan baru
