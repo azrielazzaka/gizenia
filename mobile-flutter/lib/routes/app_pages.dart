@@ -23,7 +23,7 @@ class AppPages {
       page: () => RegisterPage(),
       transition: Transition.rightToLeft,
     ),
-    /*GetPage(
+    GetPage(
       name: Routes.MAIN,
       page: () => MainNavigation(),
       transition: Transition.cupertino,
@@ -35,6 +35,6 @@ class AppPages {
     GetPage(
       name: Routes.CAMERA_AI,
       page: () => CameraScreen(),
-    ),*/
+    ),
   ];
 }
