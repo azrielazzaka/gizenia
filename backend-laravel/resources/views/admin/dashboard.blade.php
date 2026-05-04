@@ -67,20 +67,11 @@
             </div>
             <div class="flex items-center text-xs text-gray-500 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> ONLINE</div>
         </div>
-        <div class="h-48 relative mt-4">
-            <svg class="w-full h-full text-emerald-600" viewBox="0 0 400 150" preserveAspectRatio="none">
-                <path d="M0 120 Q 50 100, 100 50 T 200 60 T 300 70 T 400 20" fill="none" stroke="currentColor" stroke-width="4"></path>
-                <circle cx="100" cy="50" r="4" fill="white" stroke="currentColor" stroke-width="2"></circle>
-                <circle cx="200" cy="60" r="4" fill="white" stroke="currentColor" stroke-width="2"></circle>
-                <circle cx="300" cy="70" r="4" fill="white" stroke="currentColor" stroke-width="2"></circle>
-            </svg>
-            <svg class="w-full h-full absolute top-0 left-0 text-emerald-50 opacity-50" viewBox="0 0 400 150" preserveAspectRatio="none">
-                <path d="M0 120 Q 50 100, 100 50 T 200 60 T 300 70 T 400 20 L 400 150 L 0 150 Z" fill="currentColor"></path>
-            </svg>
-        </div>
-        <div class="flex justify-between mt-2 text-[10px] text-gray-400 font-bold uppercase">
-            <span>M1</span><span>M2</span><span>M3</span><span>M4</span>
-        </div>
+        <div class="h-48 mt-4">
+    <svg id="trendLineChart" class="w-full h-full"></svg>
+</div>
+
+<div id="trendLabel" class="flex justify-between mt-2 text-[10px] text-gray-400 font-bold uppercase"></div>
     </div>
 </div>
 
@@ -180,6 +171,64 @@
                 
                 labelContainer.innerHTML += `<span>${item.label}</span>`;
             });
+
+            // 4. TREND DISTRIBUSI PER BULAN
+// =====================
+// TREND LINE CHART FIX
+// =====================
+const svg = document.getElementById('trendLineChart');
+const trendLabel = document.getElementById('trendLabel');
+
+svg.innerHTML = '';
+trendLabel.innerHTML = '';
+
+const dataTrend = data.trend.slice(0, 6);
+
+const width = 400;
+const height = 150;
+
+const max = Math.max(...dataTrend.map(d => d.total)) || 1;
+
+let points = '';
+
+// BUAT TITIK GARIS
+dataTrend.forEach((item, i) => {
+    const x = (i / (dataTrend.length - 1)) * width;
+    const y = height - ((item.total / max) * height);
+
+    points += `${x},${y} `;
+
+    // LABEL BULAN
+    trendLabel.innerHTML += `<span>${item.label}</span>`;
+});
+
+// AREA BAWAH (gradient feel)
+svg.innerHTML += `
+<polygon 
+    fill="rgba(16,185,129,0.15)" 
+    points="${points} ${width},${height} 0,${height}"
+/>
+`;
+
+// GARIS UTAMA
+svg.innerHTML += `
+<polyline 
+    fill="none" 
+    stroke="#10B981" 
+    stroke-width="3"
+    points="${points}"
+/>
+`;
+
+// TITIK BULAT
+dataTrend.forEach((item, i) => {
+    const x = (i / (dataTrend.length - 1)) * width;
+    const y = height - ((item.total / max) * height);
+
+    svg.innerHTML += `
+        <circle cx="${x}" cy="${y}" r="4" fill="white" stroke="#10B981" stroke-width="2"/>
+    `;
+});
 
         } catch (e) {
             console.error("Gagal memuat dashboard", e);

@@ -29,7 +29,7 @@ def init_engine():
             df['serving_size_g'] = pd.to_numeric(df.get('serving_size_g', 100), errors='coerce').fillna(100)
 
             features = df[['calories', 'protein', 'fat', 'carbohydrates']]
-            knn_model = NearestNeighbors(n_neighbors=3, algorithm='auto')
+            knn_model = NearestNeighbors(n_neighbors=6, algorithm='auto')
             knn_model.fit(features)
             
             print(f"✅ MongoDB Atlas Terhubung! Model AI Siap dengan {len(df)} menu.")
