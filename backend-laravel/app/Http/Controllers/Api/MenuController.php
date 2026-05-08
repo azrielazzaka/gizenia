@@ -11,10 +11,10 @@ class MenuController extends Controller
 {
     // Mengambil semua data menu
     public function index()
-    {
-        $menus = FoodMenu::latest()->get();
-        return response()->json($menus);
-    }
+{
+    $menus = FoodMenu::latest()->paginate(10); // 10 data per page
+    return response()->json($menus);
+}
 
     // Menyimpan menu baru
     public function store(Request $request)

@@ -82,23 +82,6 @@
                     <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transform opacity-0 transition-opacity duration-200">
                        <div class="p-2">
 
-    <!-- DARK MODE -->
-    <div class="flex items-center justify-between px-4 py-2.5">
-        <div class="flex items-center text-sm text-gray-700">
-            <i class="fas fa-moon w-5 text-gray-400 mr-2"></i>
-             <span data-lang="dark_mode">Mode Gelap</span>
-        </div>
-
-        <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="darkToggle" class="sr-only peer" onchange="toggleDarkMode()">
-
-            <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-emerald-500 transition-all"></div>
-
-            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all 
-                        peer-checked:translate-x-5"></div>
-        </label>
-    </div>
-
     <!-- BAHASA -->
     <div class="px-4 py-2.5">
     <div class="flex items-center justify-between">
@@ -130,9 +113,12 @@
                         </div>
                         <div class="p-2">
                             <a href="/profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
-    <i class="far fa-id-badge w-5 text-gray-400"></i> Akun Saya
-</a>
-                            <a href="#" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"><i class="fas fa-key w-5 text-gray-400"></i> Ubah Password</a>
+                                <i class="far fa-id-badge w-5 text-gray-400"></i> Akun Saya
+                            </a>
+                            <a href="/forgot-password"
+                                    class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                                <i class="fas fa-key w-5 text-gray-400"></i> Ubah Password
+                            </a>
                         </div>
                         <div class="p-2 border-t border-gray-50">
                             <button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors"><i class="fas fa-sign-out-alt w-5"></i> Keluar Aman</button>

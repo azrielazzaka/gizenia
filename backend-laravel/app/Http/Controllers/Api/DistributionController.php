@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Distribution;
+use App\Models\FoodMenu;
 use Illuminate\Http\Request;
 
 class DistributionController extends Controller
@@ -12,12 +13,12 @@ class DistributionController extends Controller
     {
         $query = Distribution::query();
 
-    // FILTER BY DATE
-    if ($request->has('date')) {
-        $query->where('distribution_date', $request->date);
-    }
+        // FILTER BY DATE
+        if ($request->has('date')) {
+            $query->where('distribution_date', $request->date);
+        }
 
-    return $query->paginate(5);
+        return $query->paginate(5);
     }
 
     public function store(Request $request)
@@ -27,35 +28,81 @@ class DistributionController extends Controller
             'target_classes' => 'required|array'
         ]);
 
+        $foods = [];
+
+        foreach ($request->foods as $food) {
+
+            // Cari menu berdasarkan ID
+            $menu = FoodMenu::find($food['menu_id']);
+
+            $foods[] = [
+                'menu_id' => $food['menu_id'],
+                'name' => $menu ? $menu->name : 'Menu Tidak Diketahui',
+                'weight' => $food['weight']
+            ];
+        }
+
         $dist = Distribution::create([
             'distribution_date' => now()->toDateString(),
-            'foods' => $request->foods,
+            'foods' => $foods,
             'target_classes' => $request->target_classes,
-            'responses' => [] 
+            'responses' => []
         ]);
 
-        return response()->json(['message' => 'Makanan berhasil didistribusikan!', 'data' => $dist]);
+        return response()->json([
+            'message' => 'Makanan berhasil didistribusikan!',
+            'data' => $dist
+        ]);
     }
 
     public function update(Request $request, $id)
     {
         $dist = Distribution::find($id);
-        if (!$dist) return response()->json(['error' => 'Data tidak ditemukan'], 404);
+
+        if (!$dist) {
+            return response()->json([
+                'error' => 'Data tidak ditemukan'
+            ], 404);
+        }
+
+        $foods = [];
+
+        foreach ($request->foods as $food) {
+
+            $menu = FoodMenu::find($food['menu_id']);
+
+            $foods[] = [
+                'menu_id' => $food['menu_id'],
+                'name' => $menu ? $menu->name : 'Menu Tidak Diketahui',
+                'weight' => $food['weight']
+            ];
+        }
 
         $dist->update([
-            'foods' => $request->foods,
+            'foods' => $foods,
             'target_classes' => $request->target_classes,
         ]);
 
-        return response()->json(['message' => 'Data distribusi berhasil diperbarui!', 'data' => $dist]);
+        return response()->json([
+            'message' => 'Data distribusi berhasil diperbarui!',
+            'data' => $dist
+        ]);
     }
 
     public function destroy($id)
     {
         $dist = Distribution::find($id);
-        if (!$dist) return response()->json(['error' => 'Data tidak ditemukan'], 404);
-        
+
+        if (!$dist) {
+            return response()->json([
+                'error' => 'Data tidak ditemukan'
+            ], 404);
+        }
+
         $dist->delete();
-        return response()->json(['message' => 'Data distribusi berhasil dihapus!']);
+
+        return response()->json([
+            'message' => 'Data distribusi berhasil dihapus!'
+        ]);
     }
 }

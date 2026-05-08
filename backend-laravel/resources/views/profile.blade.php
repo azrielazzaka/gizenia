@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Saya - NutriSehat</title>
+    <title>Profil Saya - GIZENIA</title>
     @vite(['resources/css/app.css'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background: #f0fdf4; /* hijau sangat muda */
-            min-height: 100vh;
-            color: #1f2e1c;
-        }
+    font-family: 'Inter', sans-serif; /* 🔥 ini kunci */
+    background: #f0fdf4;
+    min-height: 100vh;
+    color: #1f2e1c;
+}
 
         .pg {
             max-width: 1200px;
@@ -48,7 +50,7 @@
         }
         .back-btn:hover { background: #e8f5e9; border-color: #81c784; }
         .logo {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 22px;
             color: #2e7d32;
             letter-spacing: -0.5px;
@@ -77,14 +79,14 @@
             font-weight: 600;
         }
         .hero-name {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 52px;
             font-weight: 700;
             line-height: 1.05;
             color: #1b3b1a;
             letter-spacing: -1.5px;
         }
-        .hero-name em { font-style: italic; color: #2e7d32; }
+        .hero-name em { font-style: normal; color: #1b3b1a; }
         .hero-sub {
             font-size: 13px;
             color: #5e6b5c;
@@ -135,7 +137,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 48px;
             color: #2e7d32;
             font-weight: 700;
@@ -162,7 +164,7 @@
         }
         .stat-box:hover { border-color: #a5d6a7; background: #fefefe; transform: translateY(-2px); }
         .stat-box .num {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 38px;
             font-weight: 700;
             color: #2e7d32;
@@ -201,7 +203,7 @@
 
         /* BMI */
         .bmi-num {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 48px;
             font-weight: 700;
             color: #2e7d32;
@@ -267,7 +269,7 @@
 
         /* KALORI */
         .kal-big {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 40px;
             font-weight: 700;
             color: #1f3b1c;
@@ -333,7 +335,7 @@
             box-shadow: 0 20px 30px rgba(0,0,0,0.05);
         }
         .modal-title {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 22px;
             color: #1f3b1c;
             margin-bottom: 6px;
@@ -378,7 +380,7 @@
     <!-- TOPBAR -->
     <div class="topbar">
         <a href="/user/dashboard" class="back-btn">&#8592; Dashboard</a>
-        <div class="logo">NutriSehat</div>
+        <div class="logo">GIZENIA</div>
     </div>
 
     <!-- HERO -->
@@ -446,9 +448,9 @@
             <div class="info-item"><span class="k">Kelas</span><span class="v" id="infoKelas">-</span></div>
             <div class="info-item"><span class="k">Usia</span><span class="v" id="infoUsia">-</span></div>
             <div class="info-item">
-    <span class="k">Password</span>
-    <button class="vg" id="ubahPasswordBtn">Ubah password →</button>
-</div>
+            <span class="k">Edit Profile</span>
+            <button class="vg" id="editProfileBtn">Edit Profile→</button>
+        </div>
         </div>
 
         <!-- KALORI -->
@@ -478,14 +480,14 @@
         </div>
     </div>
 
-    <div class="foot">🌱 Gizi seimbang, tumbuh kuat bersama NutriSehat · Hijau & Segar</div>
+    <div class="foot">🌱 Gizi seimbang, tumbuh kuat bersama GIZENIA </div>
 </div>
 
-<!-- MODAL UBAH PASSWORD -->
+<!-- MODAL UBAH profile -->
 <div id="settingsModal" class="modal-overlay">
     <div class="modal-box">
         <div style="font-size:32px;margin-bottom:8px;">🔒✨</div>
-        <div class="modal-title">Ubah Password</div>
+        <div class="modal-title">Memuat</div>
         <button id="closeSettingsBtn" class="modal-btn">Tutup</button>
     </div>
 </div>
@@ -580,8 +582,8 @@ async function loadProfile() {
         const parts     = nama.trim().split(' ');
         const firstName = parts[0];
         const lastName  = parts.slice(1).join(' ');
-        document.getElementById('heroName').innerHTML =
-            firstName + (lastName ? '<br><em>' + lastName + '</em>' : '');
+       document.getElementById('heroName').innerHTML =
+    firstName + (lastName ? ' ' + lastName : '');
 
         document.getElementById('heroSub').innerText =
             email + (kelas !== '-' ? '  ·  ' + kelas : '');
@@ -635,15 +637,8 @@ async function loadProfile() {
     }
 }
 
-// ── Modal ───────────────────────────────────────────────
-const modal = document.getElementById('settingsModal');
-
-document.getElementById('ubahPasswordBtn').addEventListener('click', () => { modal.style.display = 'flex'; });
-document.getElementById('closeSettingsBtn').addEventListener('click', () => { modal.style.display = 'none'; });
-modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
-
-document.getElementById('ubahPasswordBtn').addEventListener('click', function() {
-    window.location.href = '/forgot-password';
+document.getElementById('editProfileBtn').addEventListener('click', function() {
+    window.location.href = '/edit-profile';
 });
 
 // ── Init ────────────────────────────────────────────────
