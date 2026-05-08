@@ -14,6 +14,7 @@
         .footer { color: #999; font-size: 12px; text-align: center; margin-top: 24px; }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h2 style="color:#059669;">GIZENIA.AI</h2>
