@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Tambahkan library ini
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 
-void main() {
+void main() async { // Ubah menjadi async
   // Memastikan binding Flutter sudah siap sebelum menjalankan aplikasi
   WidgetsFlutterBinding.ensureInitialized();
   
-  runApp(const MyApp());
+  // Logika Tambahan: Cek keberadaan token JWT dari Laravel di penyimpanan lokal
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('jwt_token');
+
+  // Tentukan rute awal: Jika ada token, langsung ke MAIN, jika tidak ke LOGIN
+  String initialRoute = (token != null && token.isNotEmpty) ? Routes.MAIN : Routes.LOGIN;
+  
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute; // Tambahkan variabel rute awal
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
-    // Menggunakan GetMaterialApp (bukan MaterialApp biasa) agar fitur GetX berfungsi
+    // Menggunakan GetMaterialApp agar fitur GetX berfungsi
     return GetMaterialApp(
       title: 'Gizenia',
       debugShowCheckedModeBanner: false,
       
-      // Mengatur halaman pertama yang muncul (Login)
-      initialRoute: Routes.LOGIN, 
+      // Mengatur halaman pertama secara dinamis berdasarkan status login
+      initialRoute: initialRoute, 
       
       // Menghubungkan daftar halaman yang sudah didefinisikan di app_pages.dart
       getPages: AppPages.pages,

@@ -30,7 +30,7 @@
     </div>
     <div>
         <h4 class="font-bold text-emerald-800 text-sm mb-1">Integrasi Machine Learning</h4>
-        <p class="text-sm text-gray-600">Sistem AI akan merekomendasikan menu lengkap (Kalsium, Vitamin, Zat Besi) untuk memenuhi kebutuhan gizi harian pengguna.</p>
+        <p class="text-sm text-gray-600">Sistem AI akan merekomendasikan menu lengkap (Kalori, Protein, Lemak) untuk memenuhi kebutuhan gizi harian pengguna.</p>
     </div>
 </div>
 

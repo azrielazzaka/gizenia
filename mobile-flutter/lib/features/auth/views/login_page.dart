@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
+import '../controllers/auth_controller.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  
+  //Get.put() untuk memasukkan Controller ke memori aplikasi
+  final authController = Get.put(AuthController()); 
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +36,7 @@ class LoginPage extends StatelessWidget {
                       offset: const Offset(0, 10),
                     )
                   ],
-                  
                 ),
-                // Icon sementara sebelum gambar asli dimasukkan
                 child: Center(
                   child: Icon(Icons.food_bank, size: 60, color: Colors.green.shade800),
                 ),
@@ -137,24 +139,27 @@ class LoginPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    // Tombol Masuk
-                    ElevatedButton(
-                      // Statis: Langsung diarahkan ke halaman MAIN
-                      onPressed: () => Get.offAllNamed(Routes.MAIN),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 55),
-                        backgroundColor: const Color(0xFF22762A), // Hijau gelap sesuai gambar
-                        foregroundColor: Colors.white,
-                        elevation: 4,
-                        shadowColor: Colors.green.withValues(alpha: 0.3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                    // Tombol Masuk yang Dinamis & Terhubung ke Laravel
+                    SizedBox(
+                      width: double.infinity,
+                      child: Obx(() => ElevatedButton(
+                        // Jika sedang loading, tombol mati. Jika tidak, jalankan fungsi login.
+                        onPressed: authController.isLoading.value 
+                            ? null 
+                            : () => authController.login(emailController.text, passwordController.text),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade800,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                      ),
-                      child: const Text(
-                        "Masuk Ke Akun",
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
+                        // Menampilkan indikator loading atau teks berdasarkan status
+                        child: authController.isLoading.value
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text(
+                                "Masuk",
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                      )),
                     ),
                   ],
                 ),

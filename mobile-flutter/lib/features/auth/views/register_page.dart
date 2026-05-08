@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
+import '../controllers/auth_controller.dart'; // ✅ IMPORT CONTROLLER
 
 class RegisterPage extends StatelessWidget {
   RegisterPage({super.key});
@@ -19,6 +20,8 @@ class RegisterPage extends StatelessWidget {
   final isConfirmObscure = true.obs;
   final isChecked = false.obs;
   final selectedKelas = '1'.obs; // Default kelas 1
+
+  final authController = Get.put(AuthController());
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +89,7 @@ class RegisterPage extends StatelessWidget {
               
               // Input Kata Sandi dengan fitur hide/show
               _buildPasswordField("Kata Sandi", "••••••••", passwordController, isObscure),
+              
               // 5. Grid untuk Umur, Kelas, Berat, dan Tinggi Badan
               Row(
                 children: [
@@ -136,12 +140,23 @@ class RegisterPage extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              // 7. Tombol Daftar
-              ElevatedButton(
-                onPressed: () {
-                  // Simulasi Notifikasi Sukses lalu ke halaman Login
-                  Get.snackbar("Berhasil", "Akun berhasil dibuat!", backgroundColor: Colors.green.shade100);
-                  Future.delayed(const Duration(seconds: 1), () => Get.offAllNamed(Routes.LOGIN));
+              // 7. ✅ TOMBOL DAFTAR (TERHUBUNG KE LARAVEL)
+              Obx(() => ElevatedButton(
+                onPressed: authController.isLoading.value ? null : () {
+                  if (!isChecked.value) {
+                    Get.snackbar("Perhatian", "Anda harus menyetujui Syarat & Ketentuan.", backgroundColor: Colors.orange.shade100);
+                    return;
+                  }
+                  
+                  // Memanggil fungsi register dari AuthController
+                  authController.register({
+                    "name": nameController.text,
+                    "email": emailController.text,
+                    "password": passwordController.text,
+                    "age": int.tryParse(ageController.text) ?? 0,
+                    "weight": double.tryParse(weightController.text) ?? 0.0,
+                    "height": double.tryParse(heightController.text) ?? 0.0,
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 55),
@@ -150,8 +165,10 @@ class RegisterPage extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   elevation: 2,
                 ),
-                child: const Text("Buat Akun", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
+                child: authController.isLoading.value
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text("Buat Akun", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              )),
               const SizedBox(height: 32),
 
               // 8. Footer Login Link
@@ -175,7 +192,6 @@ class RegisterPage extends StatelessWidget {
 
   // --- WIDGET HELPERS --- //
 
-  // Helper untuk input teks standar
   Widget _buildInputField(String label, String hint, IconData icon, TextEditingController controller, {TextInputType type = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -202,7 +218,6 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
-  // Helper untuk input password (dengan mata hide/show)
   Widget _buildPasswordField(String label, String hint, TextEditingController controller, RxBool isObscure) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -233,7 +248,6 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
-  // Helper khusus untuk Dropdown Kelas 1-6
   Widget _buildDropdownKelas() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),

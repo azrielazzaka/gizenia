@@ -1,274 +1,417 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import '../controllers/calorie_checker_controller.dart';
 
 class CalorieCheckerPage extends StatelessWidget {
   const CalorieCheckerPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F8F8), // Background abu-abu terang
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header (Logo & Notifikasi)
-              _buildHeader(),
-              const SizedBox(height: 30),
+    final controller = Get.put(CalorieCheckerController());
 
-              // 2. Judul Halaman
-              const Text("Cek Nutrisi Makanan", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, height: 1.2)),
-              const SizedBox(height: 8),
-              Text("Pantau asupan harianmu dengan presisi AI.", style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
-              const SizedBox(height: 30),
-
-              // 3. Form Input Card (Putih)
-              _buildFormCard(),
-              const SizedBox(height: 40),
-
-              // 4. Header Hasil Analisis
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Hasil Analisis", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(color: Colors.green.shade200, borderRadius: BorderRadius.circular(20)),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.check_circle, size: 14, color: Colors.black87),
-                        const SizedBox(width: 4),
-                        const Text("SEIMBANG", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87)),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // 5. Total Energi Card
-              _buildTotalEnergyCard(),
-              const SizedBox(height: 16),
-
-              // 6. Grid Macro (Protein & Karbohidrat)
-              Row(
-                children: [
-                  Expanded(child: _buildMacroCard("PROTEIN", "2.7g", 0.15, Icons.fitness_center, Colors.green.shade800)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildMacroCard("KARBOHIDRAT", "28.2g", 0.7, Icons.grass, Colors.green.shade800)),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 7. Lemak Card (Pink)
-              _buildFatCard(),
-              const SizedBox(height: 16),
-
-              // 8. AI Insight Card (Hijau Muda)
-              _buildInsightCard(),
-
-              // Padding bawah agar tidak tertutup Bottom Navigation / FAB
-              const SizedBox(height: 120),
-            ],
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F6F4),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: Text("Pelacak Nutrisi AI", style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.bold, fontSize: 18)),
+          centerTitle: true,
+          bottom: TabBar(
+            labelColor: Colors.green.shade800,
+            unselectedLabelColor: Colors.grey.shade400,
+            indicatorColor: Colors.green.shade800,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            tabs: const [Tab(text: "KATALOG MENU"), Tab(text: "SIMULASI PIRINGKU")],
           ),
+        ),
+        body: Obx(() {
+          if (controller.isLoading.value) return const Center(child: CircularProgressIndicator());
+          return TabBarView(
+            children: [
+              _buildTabKatalog(controller), 
+              _buildTabPelacak(controller),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  // ==========================================
+  // TAB 1: KATALOG (DENGAN SEARCH & FILTER)
+  // ==========================================
+  Widget _buildTabKatalog(CalorieCheckerController controller) {
+    return RefreshIndicator(
+      onRefresh: controller.fetchMenus,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // AI Recommendation Banner
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.green.shade700, Colors.teal.shade800]), borderRadius: BorderRadius.circular(24)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)), child: const Text("Analisis Gizi AI", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
+                    const SizedBox(height: 16),
+                    const Text("Rekomendasi Personal", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text("Target 1x Makan: ${controller.targetMealCalories.value} kkal", style: const TextStyle(color: Colors.yellowAccent, fontSize: 20, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Rekomendasi Horizontal
+            if (controller.recommendations.isNotEmpty) ...[
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Text("Sangat Disarankan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 250,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: controller.recommendations.length,
+                  itemBuilder: (context, index) => _buildMenuCard(controller.recommendations[index], true),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // Filter & Search
+            const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Text("Katalog Semua Menu", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      onChanged: (val) => controller.searchQuery.value = val,
+                      decoration: InputDecoration(hintText: "Cari menu...", filled: true, fillColor: Colors.white, prefixIcon: const Icon(Icons.search, size: 20), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(vertical: 0)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: controller.sortType.value.isEmpty ? null : controller.sortType.value,
+                          hint: const Text("Urutkan", style: TextStyle(fontSize: 12)),
+                          items: const [
+                            DropdownMenuItem(value: "", child: Text("Default", style: TextStyle(fontSize: 12))),
+                            DropdownMenuItem(value: "az", child: Text("A - Z", style: TextStyle(fontSize: 12))),
+                            DropdownMenuItem(value: "cal_low", child: Text("Kalori Terendah", style: TextStyle(fontSize: 12))),
+                            DropdownMenuItem(value: "cal_high", child: Text("Kalori Tertinggi", style: TextStyle(fontSize: 12))),
+                          ],
+                          onChanged: (val) => controller.sortType.value = val ?? "",
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // List Semua Menu
+            Obx(() {
+              var list = controller.filteredMenus;
+              if (list.isEmpty) return const Center(child: Text("Menu tidak ditemukan."));
+              return ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: list.length,
+                itemBuilder: (context, index) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildListMenuCard(list[index])),
+              );
+            }),
+          ],
         ),
       ),
     );
   }
 
-  // --- KOMPONEN WIDGET (HELPERS) ---
+  // ==========================================
+  // TAB 2: PELACAK (GRAFIK & AI EVALUATOR)
+  // ==========================================
+  Widget _buildTabPelacak(CalorieCheckerController controller) {
+    final portionController = TextEditingController(text: "100");
+    Map<String, dynamic>? selectedMenu; // ✅ PERBAIKAN 1: Tipe data yang benar
 
-  Widget _buildHeader() {
-    return Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. KARTU ANALISIS GIZI (VISUAL GRAFIK)
+          Obx(() {
+            double calPercent = (controller.currentCals.value / controller.targetMealCalories.value).clamp(0.0, 1.0);
+            
+            Color boxColor = Colors.green.shade900;
+            if (controller.aiStatusColor.value == "red") boxColor = Colors.red.shade900;
+            if (controller.aiStatusColor.value == "orange") boxColor = Colors.orange.shade800;
+
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: boxColor, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: boxColor.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+              child: Column(
+                children: [
+                  const Text("Analisis Profil Gizi", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 24),
+                  
+                  // Circular Progress (Total Kalori)
+                  CircularPercentIndicator(
+                    radius: 70.0,
+                    lineWidth: 12.0,
+                    percent: calPercent,
+                    center: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("${controller.currentCals.value.round()}", style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                        const Text("KCAL", style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    progressColor: Colors.yellowAccent,
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    circularStrokeCap: CircularStrokeCap.round,
+                  ),
+                  const SizedBox(height: 12),
+                  Text("Target: ${controller.targetMealCalories.value} kkal", style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(height: 24),
+
+                  // Linear Progress (Makronutrisi)
+                  _buildLinearMacro("Karbohidrat", controller.currentCarbs.value, Colors.orangeAccent),
+                  const SizedBox(height: 12),
+                  _buildLinearMacro("Protein", controller.currentPro.value, Colors.blueAccent),
+                  const SizedBox(height: 12),
+                  _buildLinearMacro("Lemak", controller.currentFat.value, Colors.purpleAccent),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Kotak Vonis AI
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                    child: Column(
+                      children: [
+                        if (controller.isAiLoading.value)
+                          const Center(child: CircularProgressIndicator())
+                        else ...[
+                          Text(controller.aiVerdictTitle.value, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: controller.aiStatusColor.value == "green" ? Colors.green.shade700 : (controller.aiStatusColor.value == "red" ? Colors.red.shade700 : Colors.orange.shade700))),
+                          const SizedBox(height: 8),
+                          Text(controller.aiVerdictMessage.value, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.5)),
+                        ]
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Tombol Tanya AI
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => controller.evaluateWithAI(),
+                      icon: const Icon(Icons.auto_awesome),
+                      label: const Text("Evaluasi dengan AI"),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: boxColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 24),
+
+          // 2. KARTU TAMBAH MAKANAN
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Tambahkan Makanan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                
+                // ✅ PERBAIKAN 2: Autocomplete Type Cast
+                Autocomplete<Map<String, dynamic>>(
+                  displayStringForOption: (option) => option['name'].toString(),
+                  optionsBuilder: (TextEditingValue textVal) {
+                    if (textVal.text.isEmpty) return const Iterable<Map<String, dynamic>>.empty();
+                    return controller.allMenus
+                        .where((menu) => menu['name'].toString().toLowerCase().contains(textVal.text.toLowerCase()))
+                        .cast<Map<String, dynamic>>();
+                  },
+                  onSelected: (option) => selectedMenu = option,
+                  fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(hintText: "Cari makanan...", filled: true, fillColor: Colors.grey.shade50, border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), prefixIcon: const Icon(Icons.search)),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                
+                // Porsi Input
+                TextField(
+                  controller: portionController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: "Porsi (Gram)", filled: true, fillColor: Colors.grey.shade50, border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), suffixText: "g"),
+                ),
+                const SizedBox(height: 16),
+                
+                // Tombol Tambah
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (selectedMenu != null) {
+                        controller.addFoodToPlate(selectedMenu, double.tryParse(portionController.text) ?? 0);
+                        selectedMenu = null; // Reset setelah ditambah
+                      } else {
+                        Get.snackbar("Pilih Makanan", "Silakan pilih makanan dari dropdown terlebih dahulu.");
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text("Masukkan ke Piring"),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade800, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // 3. DAFTAR PIRING (CART)
+          const Text("Isi Piring Saya", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Obx(() {
+            if (controller.myPlate.isEmpty) {
+              return Container(padding: const EdgeInsets.all(30), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)), child: Center(child: Text("Piring masih kosong.", style: TextStyle(color: Colors.grey.shade400))));
+            }
+            return ListView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: controller.myPlate.length,
+              itemBuilder: (context, index) {
+                var item = controller.myPlate[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8)]),
+                  child: Row(
+                    children: [
+                      CircleAvatar(backgroundColor: Colors.green.shade50, child: Text("${index + 1}", style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold))),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text("${item['weight']}g • ${item['calories'].round()} kkal", style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                          ],
+                        ),
+                      ),
+                      IconButton(icon: Icon(Icons.delete, color: Colors.red.shade300), onPressed: () => controller.removeFood(index)),
+                    ],
+                  ),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // WIDGET BANTUAN (HELPERS)
+  // ==========================================
+  
+  Widget _buildLinearMacro(String title, double value, Color color) {
+    return Column(
       children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: Colors.grey.shade300,
-          child: const Icon(Icons.person, color: Colors.black54),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text("${value.round()}g", style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+          ],
         ),
-        const SizedBox(width: 12),
-        Text("GIZENIA", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green.shade800)),
-        const Spacer(),
-        Icon(Icons.notifications_rounded, color: Colors.grey.shade600),
+        const SizedBox(height: 6),
+        LinearPercentIndicator(
+          lineHeight: 6.0,
+          percent: (value / 200).clamp(0.0, 1.0), // Asumsi max 200g untuk display bar
+          progressColor: color,
+          backgroundColor: Colors.white.withValues(alpha: 0.2),
+          barRadius: const Radius.circular(10),
+          padding: EdgeInsets.zero,
+        ),
       ],
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildMenuCard(dynamic menu, bool isRecommended) {
+    String imgUrl = menu['image'] ?? menu['image_url'] ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061';
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
+      width: 220, margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: isRecommended ? Border.all(color: Colors.green.shade200) : null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("PILIH MAKANAN", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Colors.black54)),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: "Nasi Putih",
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
-                items: ["Nasi Putih", "Dada Ayam", "Telur Rebus"].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  );
-                }).toList(),
-                onChanged: (_) {},
-              ),
+          ClipRRect(borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)), child: Image.network(imgUrl, height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey.shade300))),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(menu['name'] ?? '-', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 12),
+                Text("${menu['calories']} kkal | Pro: ${menu['protein']}g", style: TextStyle(fontSize: 12, color: Colors.green.shade800, fontWeight: FontWeight.bold)),
+              ],
             ),
-          ),
-          const SizedBox(height: 20),
-          
-          const Text("BERAT (GRAMS)", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Colors.black54)),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-            child: const TextField(
-              decoration: InputDecoration(
-                hintText: "100",
-                hintStyle: TextStyle(fontWeight: FontWeight.w500, color: Colors.black87),
-                border: InputBorder.none,
-                suffixText: "gr",
-                suffixStyle: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ),
-          const SizedBox(height: 30),
-
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 55),
-              backgroundColor: Colors.green.shade800,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
-            ),
-            child: const Text("Cek Nutrisi", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           )
         ],
       ),
     );
   }
 
-  Widget _buildTotalEnergyCard() {
+  Widget _buildListMenuCard(dynamic menu) {
+    String imgUrl = menu['image'] ?? menu['image_url'] ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061';
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.green.shade200,
-            child: Icon(Icons.local_fire_department, color: Colors.green.shade900, size: 30),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("TOTAL ENERGI", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Colors.black54)),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+          ClipRRect(borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), bottomLeft: Radius.circular(20)), child: Image.network(imgUrl, height: 100, width: 100, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(height: 100, width: 100, color: Colors.grey.shade300))),
+          
+          // ✅ PERBAIKAN 3: Membungkus padding dengan widget Padding, bukan meletakkannya di dalam Expanded
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("130", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, height: 1.1)),
-                  const SizedBox(width: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text("kkal", style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                  ),
+                  Text(menu['name'] ?? '-', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text("${menu['calories']} kkal", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 ],
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMacroCard(String title, String value, double percent, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 20),
-          Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Colors.black54)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          LinearPercentIndicator(
-            lineHeight: 6.0,
-            percent: percent,
-            progressColor: color,
-            backgroundColor: Colors.grey.shade200,
-            barRadius: const Radius.circular(10),
-            padding: EdgeInsets.zero,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFatCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF0F3), // Latar belakang pink pucat
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.pink.shade50),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.water_drop, color: Color(0xFF6B1D39), size: 24), // Ikon tetesan ungu/merah marun
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("LEMAK TOTAL", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Color(0xFF6B1D39))),
-              const SizedBox(height: 2),
-              const Text("0.3g", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(color: const Color(0xFFFFD6E0), borderRadius: BorderRadius.circular(20)),
-            child: const Text("RENDAH LEMAK", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF6B1D39))),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInsightCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFFEAF5E5), borderRadius: BorderRadius.circular(30)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.lightbulb, color: Colors.green.shade800),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              "Nasi putih merupakan sumber energi cepat. Untuk keseimbangan lebih baik, padukan dengan serat dari sayuran hijau.",
-              style: TextStyle(fontSize: 13, color: Colors.green.shade900, height: 1.5, fontWeight: FontWeight.w500),
             ),
-          ),
+          )
         ],
       ),
     );

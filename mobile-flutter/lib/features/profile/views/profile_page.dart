@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../routes/app_routes.dart';
+import '../controllers/profile_controller.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -8,6 +8,8 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(ProfileController());
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F8),
       body: SafeArea(
@@ -16,19 +18,17 @@ class ProfilePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 1. Header (Logo & Notifikasi)
               _buildHeader(),
               const SizedBox(height: 30),
-
-              // 2. Foto Profil & Status
               _buildProfilePicture(),
               const SizedBox(height: 16),
-              const Text("Alexandra Chen", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              
+              // REAKTIF: Nama & Email
+              Obx(() => Text(controller.name.value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold))),
               const SizedBox(height: 4),
-              const Text("alexandra.chen@healthmail.com", style: TextStyle(fontSize: 14, color: Colors.black87)),
+              Obx(() => Text(controller.email.value, style: const TextStyle(fontSize: 14, color: Colors.black87))),
               const SizedBox(height: 20),
 
-              // 3. Tombol Edit Profil
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -45,7 +45,6 @@ class ProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
-              // 4. Body Data Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -59,32 +58,27 @@ class ProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Kartu Berat & Tinggi
+              // REAKTIF: Berat & Tinggi
               Row(
                 children: [
-                  Expanded(child: _buildDataCard("BERAT\nBADAN", "58", "kg", Icons.monitor_weight_outlined)),
+                  Expanded(child: Obx(() => _buildDataCard("BERAT\nBADAN", "${controller.weight.value}", "kg", Icons.monitor_weight_outlined))),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildDataCard("TINGGI\nBADAN", "168", "cm", Icons.height)),
+                  Expanded(child: Obx(() => _buildDataCard("TINGGI\nBADAN", "${controller.height.value}", "cm", Icons.height))),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // Kartu Usia (Lebar Penuh dengan warna hijau pastel)
-              _buildAgeCard(),
+              // REAKTIF: Usia
+              Obx(() => _buildAgeCard(controller.age.value.toString())),
               const SizedBox(height: 30),
 
-              // 5. Settings Section
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text("Settings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+              const Align(alignment: Alignment.centerLeft, child: Text("Settings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
               const SizedBox(height: 16),
               _buildSettingsBox(),
               const SizedBox(height: 40),
 
-              // 6. Tombol Logout
               GestureDetector(
-                onTap: () => Get.offAllNamed(Routes.LOGIN),
+                onTap: () => controller.logout(),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -95,11 +89,7 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // 7. Versi Aplikasi
               Text("GIZENIA V2.4.0", style: TextStyle(fontSize: 10, letterSpacing: 2.0, color: Colors.grey.shade400, fontWeight: FontWeight.bold)),
-
-              // Padding ekstra bawah agar tidak tertutup Bottom Navigation Bar
               const SizedBox(height: 100),
             ],
           ),
@@ -108,16 +98,10 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // --- KOMPONEN WIDGET (HELPERS) ---
-
-  Widget _buildHeader() {
+  Widget _buildHeader() { /* Sama persis seperti kode Anda */ 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: Colors.grey.shade800,
-          child: const Icon(Icons.person, color: Colors.white, size: 20),
-        ),
+        CircleAvatar(radius: 18, backgroundColor: Colors.grey.shade800, child: const Icon(Icons.person, color: Colors.white, size: 20)),
         const SizedBox(width: 12),
         Text("GIZENIA", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green.shade800)),
         const Spacer(),
@@ -126,135 +110,65 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfilePicture() {
+  Widget _buildProfilePicture() { /* Sama persis seperti kode Anda */ 
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
         Container(
-          width: 110,
-          height: 110,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2C2C2C), // Warna gelap seperti di gambar
-            borderRadius: BorderRadius.circular(40), // Membuat efek Squircle (kotak melengkung)
-            border: Border.all(color: Colors.white, width: 4),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-          ),
-          child: const Icon(Icons.person, size: 70, color: Colors.white), // Ganti dengan Image.network jika punya URL foto
+          width: 110, height: 110,
+          decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white, width: 4), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
+          child: const Icon(Icons.person, size: 70, color: Colors.white),
         ),
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.green.shade800,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-          ),
-          child: const Icon(Icons.edit, color: Colors.white, size: 16),
-        ),
+        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.green.shade800, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)), child: const Icon(Icons.edit, color: Colors.white, size: 16)),
       ],
     );
   }
 
-  Widget _buildDataCard(String title, String value, String unit, IconData icon) {
+  Widget _buildDataCard(String title, String value, String unit, IconData icon) { /* Sama persis seperti kode Anda */ 
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
-      ),
+      padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: Colors.green.shade800, size: 18),
-              const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-            ],
-          ),
+          Row(children: [Icon(icon, color: Colors.green.shade800, size: 18), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5))]),
           const SizedBox(height: 16),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 4),
-              Text(unit, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
+            crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic,
+            children: [Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)), const SizedBox(width: 4), Text(unit, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold))],
           )
         ],
       ),
     );
   }
 
-  Widget _buildAgeCard() {
+  Widget _buildAgeCard(String ageValue) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F9ED), // Hijau sangat muda
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
-      ),
+      padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFFF0F9ED), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.cake, color: Colors.green.shade300, size: 18),
-                  const SizedBox(width: 8),
-                  Text("USIA", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5, color: Colors.green.shade300)),
-                ],
-              ),
+              Row(children: [Icon(Icons.cake, color: Colors.green.shade300, size: 18), const SizedBox(width: 8), Text("USIA", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5, color: Colors.green.shade300))]),
               const SizedBox(height: 8),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text("26", style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.green.shade200)),
-                  const SizedBox(width: 4),
-                  Text("Tahun", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.green.shade200)),
-                ],
+                crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic,
+                children: [Text(ageValue, style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.green.shade200)), const SizedBox(width: 4), Text("Tahun", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.green.shade200))],
               )
             ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(color: Colors.green.shade50.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20)),
-            child: Text("Goal: Maintain", style: TextStyle(color: Colors.green.shade300, fontWeight: FontWeight.bold, fontSize: 12)),
-          )
+          Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: Colors.green.shade50.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20)), child: Text("Goal: Maintain", style: TextStyle(color: Colors.green.shade300, fontWeight: FontWeight.bold, fontSize: 12)))
         ],
       ),
     );
   }
 
-  Widget _buildSettingsBox() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
-      ),
-      child: Column(
-        children: [
-          _buildSettingsTile(Icons.settings, "AI Preferences"),
-          Divider(height: 1, color: Colors.grey.shade100, indent: 20, endIndent: 20),
-          _buildSettingsTile(Icons.security, "Privacy & Security"),
-        ],
-      ),
-    );
+  Widget _buildSettingsBox() { /* Sama persis seperti kode Anda */ 
+    return Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)]), child: Column(children: [_buildSettingsTile(Icons.settings, "AI Preferences"), Divider(height: 1, color: Colors.grey.shade100, indent: 20, endIndent: 20), _buildSettingsTile(Icons.security, "Privacy & Security")]));
   }
 
-  Widget _buildSettingsTile(IconData icon, String title) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      leading: Icon(icon, color: Colors.black87, size: 22),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.black87),
-      onTap: () {},
-    );
+  Widget _buildSettingsTile(IconData icon, String title) { /* Sama persis seperti kode Anda */ 
+    return ListTile(contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), leading: Icon(icon, color: Colors.black87, size: 22), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)), trailing: const Icon(Icons.chevron_right, color: Colors.black87), onTap: () {});
   }
 }
