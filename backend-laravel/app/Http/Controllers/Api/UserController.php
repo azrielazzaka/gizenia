@@ -89,4 +89,35 @@ class UserController extends Controller
         'user' => $user
     ], 201);
 }
+
+public function updateProfile(Request $request)
+{
+    $user = auth()->user();
+
+    if (!$user) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'age' => 'required|integer|min:1',
+        'class_room' => 'nullable|string|max:50',
+        'weight' => 'required|numeric|min:1',
+        'height' => 'required|numeric|min:1',
+    ]);
+
+    $user->update([
+        'name' => $request->name,
+        'age' => $request->age,
+        'class_room' => $request->class_room,
+        'weight' => $request->weight,
+        'height' => $request->height,
+    ]);
+
+    return response()->json([
+        'message' => 'Profil berhasil diperbarui',
+        'data' => $user
+    ]);
+}
+
 }

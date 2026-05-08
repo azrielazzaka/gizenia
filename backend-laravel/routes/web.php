@@ -13,6 +13,8 @@ Route::view('/reset-password', 'auth.reset-password')->name('reset.password');
     
 // Halaman Profil Pengguna
 Route::view('/profile', 'profile')->name('profile');
+Route::get('/edit-profile', function () {
+    return view('edit-profile');});
 
 // Admin Routes
 Route::prefix('admin')->group(function () {

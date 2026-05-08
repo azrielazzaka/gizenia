@@ -119,6 +119,11 @@
     </div>
 </div>
 
+<div class="flex justify-between items-center mt-6">
+    <span id="paginationInfo" class="text-xs text-gray-500"></span>
+    <div id="paginationControls" class="flex space-x-1"></div>
+</div>
+
 <script>
     const token = localStorage.getItem('jwt_token');
     if (!token) window.location.href = '/login';
@@ -286,19 +291,33 @@
 
     const addCardHTML = `<div onclick="openModalForAdd()" class="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-gray-100 hover:border-emerald-300 transition-colors h-full min-h-[250px]"><div class="w-10 h-10 bg-slate-300 text-white rounded-full flex items-center justify-center mb-4 shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg></div><span class="text-sm font-semibold text-slate-400 text-center leading-snug">Tambah Entri<br>Dataset</span></div>`;
 
-    async function fetchMenus() {
-        try {
-            const res = await fetch('/api/menus', { headers: { 'Authorization': `Bearer ${token}` }});
-            const menus = await res.json();
-            
-            allMenusData = menus;
+    let currentPage = 1;
 
-            const container = document.getElementById('menuGridContainer');
-            container.innerHTML = '';
-            menus.forEach(menu => container.insertAdjacentHTML('beforeend', createMenuCard(menu)));
-            container.insertAdjacentHTML('beforeend', addCardHTML);
-        } catch (e) { console.error(e); }
-    }
+async function fetchMenus(page = 1) {
+    currentPage = page;
+    try {
+        const res = await fetch(`/api/menus?page=${page}`, { 
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        allMenusData = data.data;
+
+        const container = document.getElementById('menuGridContainer');
+        container.innerHTML = '';
+
+        data.data.forEach(menu => {
+            container.insertAdjacentHTML('beforeend', createMenuCard(menu));
+        });
+
+        if (data.current_page === data.last_page) {
+    container.insertAdjacentHTML('beforeend', addCardHTML);
+}
+
+        renderPagination(data);
+
+    } catch (e) { console.error(e); }
+}
 
     document.getElementById('menuForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -356,6 +375,30 @@
         }
     });
 
+    function renderPagination(data) {
+    document.getElementById('paginationInfo').innerText =
+        `Menampilkan ${data.from || 0} - ${data.to || 0} dari ${data.total} menu`;
+
+    const controls = document.getElementById('paginationControls');
+    controls.innerHTML = '';
+
+    if (data.current_page > 1) {
+        controls.innerHTML += `
+            <button onclick="fetchMenus(${data.current_page - 1})"
+            class="px-3 py-1 border rounded text-xs">Prev</button>`;
+    }
+
+    controls.innerHTML += `
+        <span class="px-3 py-1 bg-emerald-50 text-emerald-700 border rounded text-xs font-bold">
+            ${data.current_page} / ${data.last_page}
+        </span>`;
+
+    if (data.current_page < data.last_page) {
+        controls.innerHTML += `
+            <button onclick="fetchMenus(${data.current_page + 1})"
+            class="px-3 py-1 border rounded text-xs">Next</button>`;
+    }
+}
     fetchMenus();
 </script>
 @endsection
