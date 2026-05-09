@@ -89,27 +89,31 @@ public function sendOtp(Request $request)
         return response()->json(['error' => 'Email tidak ditemukan'], 404);
     }
 
-    $otp = rand(100000, 999999);
+    $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
     $user->reset_otp = $otp;
-    $user->otp_expired_at = now()->addMinutes(5);
+    $user->reset_otp_expires_at = now()->addMinutes(5); // ✅ fix nama field
     $user->save();
 
-    // Kirim email
-    Mail::raw("Kode OTP kamu adalah: $otp\nBerlaku 5 menit.", function ($message) use ($user) {
-        $message->to($user->email)
-                ->subject('Reset Password OTP - GIZENIA');
-    });
+    try {
+        Mail::send('emails.otp', ['otp' => $otp], function ($message) use ($user) {
+            $message->to($user->email)
+                    ->subject('Reset Password OTP - GIZENIA.AI');
+        });
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Gagal kirim email: ' . $e->getMessage()
+        ], 500);
+    }
 
-    return response()->json([
-        'message' => 'OTP berhasil dikirim ke email'
-    ]);
+    return response()->json(['message' => 'OTP berhasil dikirim ke email']);
 }
+
 public function resetPasswordOtp(Request $request)
 {
     $request->validate([
-        'email' => 'required|email',
-        'otp' => 'required',
+        'email'    => 'required|email',
+        'otp'      => 'required',
         'password' => 'required|min:6|confirmed'
     ]);
 
@@ -123,16 +127,13 @@ public function resetPasswordOtp(Request $request)
         return response()->json(['error' => 'OTP salah'], 400);
     }
 
-    if (now()->gt($user->otp_expired_at)) {
+    if (now()->gt($user->reset_otp_expires_at)) { // ✅ fix nama field
         return response()->json(['error' => 'OTP sudah kadaluarsa'], 400);
     }
 
     $user->password = bcrypt($request->password);
-
-    // hapus OTP setelah dipakai
     $user->reset_otp = null;
-    $user->otp_expired_at = null;
-
+    $user->reset_otp_expires_at = null; // ✅ fix nama field
     $user->save();
 
     return response()->json(['message' => 'Password berhasil diubah']);

@@ -17,16 +17,18 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('send-otp', [AuthController::class, 'sendOtp']);
     Route::post('reset-password', [AuthController::class, 'resetPasswordOtp']);
+    
 
     // Endpoint yang butuh Token JWT
         Route::middleware('auth:api')->group(function () {
+        Route::put('user/update-profile', [UserController::class, 'updateProfile']);    
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
     });
 });
 
 // --- GENERAL DATA ROUTES (Butuh Token JWT) ---
-Route::middleware('auth:api')->group(function () {
+    Route::middleware('auth:api')->group(function () {
     Route::get('users', [UserController::class, 'index']);
     Route::post('users', [UserController::class, 'store']); 
     Route::put('users/{id}', [UserController::class, 'update']);
@@ -63,5 +65,5 @@ Route::middleware(['auth:api', 'role:user'])->prefix('user')->group(function () 
     Route::post('distributions/{id}/respond', [UserDashboardController::class, 'submitResponse']);
     Route::get('history', [UserDashboardController::class, 'history']);
     Route::get('menus', [UserMenuController::class, 'index']);
-    
+
 });
