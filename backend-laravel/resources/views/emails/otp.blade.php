@@ -17,7 +17,7 @@
 <body>
     <div class="container">
         <h2 style="color:#059669;">GIZENIA.AI</h2>
-        <p>Gunakan kode OTP berikut untuk reset password kamu.</p>
+        <p>Gunakan kode OTP berikut untuk mereset password kamu.</p>
         <p>Kode berlaku selama <strong>5 menit</strong>.</p>
         <div class="otp-box">{{ $otp }}</div>
         <p>Jangan bagikan kode ini kepada siapapun.</p>
