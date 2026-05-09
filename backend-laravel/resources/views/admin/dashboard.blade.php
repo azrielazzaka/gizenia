@@ -62,8 +62,8 @@
     <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-50">
         <div class="flex justify-between items-start mb-6">
             <div>
-                <h3 class="font-bold text-lg text-gray-900">Tren Operasional</h3>
-                <p class="text-xs text-gray-500">Ilustrasi kelancaran sistem bulan ini</p>
+                <h3 class="font-bold text-lg text-gray-900">Tren Distribusi MBG</h3>
+                <p class="text-xs text-gray-500">Perkembangan distribusi dalam 6 bulan terakhir</p>
             </div>
             <div class="flex items-center text-xs text-gray-500 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> ONLINE</div>
         </div>

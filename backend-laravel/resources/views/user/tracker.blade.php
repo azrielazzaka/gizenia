@@ -342,7 +342,7 @@ async function evaluateNutritionWithAI(totalCals) {
         });
 
         const data = await response.json();
-        title.innerText = "AI: " + data.evaluation.verdict;
+        title.innerText = " " + data.evaluation.verdict;
         desc.innerHTML = data.evaluation.messages.join(" ");
 
     } catch {
