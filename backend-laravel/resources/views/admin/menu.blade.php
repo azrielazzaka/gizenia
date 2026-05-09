@@ -4,7 +4,7 @@
 <div class="flex justify-between items-center mb-6">
     <div>
         <h2 class="text-3xl font-bold text-gray-900">Menu Data</h2>
-        <p class="text-gray-500 text-sm mt-1">Kelola dataset distribusi makanan (Standar NutritionVerse) dengan presisi AI.</p>
+        <p class="text-gray-500 text-sm mt-1">Kelola dataset distribusi makanan bergizi dengan presisi AI.</p>
     </div>
     
     <div class="flex space-x-3">
@@ -30,14 +30,14 @@
     </div>
     <div>
         <h4 class="font-bold text-emerald-800 text-sm mb-1">Integrasi Machine Learning</h4>
-        <p class="text-sm text-gray-600">Sistem AI sekarang melacak mikronutrisi lengkap (Kalsium, Vitamin, Zat Besi) untuk menghasilkan rekomendasi diet personal yang akurat.</p>
+        <p class="text-sm text-gray-600">Sistem AI akan merekomendasikan menu lengkap (Kalsium, Vitamin, Zat Besi) untuk memenuhi kebutuhan gizi harian pengguna.</p>
     </div>
 </div>
 
 <div id="menuGridContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-12">
     <div id="loadingIndicator" class="col-span-full py-10 text-center text-gray-400">
         <svg class="animate-spin h-8 w-8 mx-auto text-emerald-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        Memuat dataset menu dari MongoDB...
+        Memuat dataset menu dari Database...
     </div>
 </div>
 
@@ -53,7 +53,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="space-y-4 col-span-1 border-r pr-6 border-gray-100">
                     <h4 class="text-xs font-bold text-emerald-600 uppercase tracking-widest border-b pb-2">Informasi Menu</h4>
-                    <div><label class="block text-xs font-medium text-gray-700 mb-1">Kaggle ID (Opsional)</label><input type="text" id="m_kaggle" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none"></div>
+                    <div><label class="block text-xs font-medium text-gray-700 mb-1">ID (Opsional)</label><input type="text" id="m_kaggle" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none"></div>
                     <div><label class="block text-xs font-medium text-gray-700 mb-1">Nama Menu</label><input type="text" id="m_name" required class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></div>
                     <div><label class="block text-xs font-medium text-gray-700 mb-1">URL Gambar</label><input type="url" id="m_image" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none" placeholder="https://..."></div>
                     <div class="grid grid-cols-2 gap-3">

@@ -3,11 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VitalityCore - AI-Powered Wellness</title>
+    <title>GIZENIA - AI-Powered</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style> body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; } </style>
 </head>
+<div id="fiturModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+
+    <div class="bg-white w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto p-8 rounded-2xl shadow-xl relative">
+
+        <!-- Tombol Close -->
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black text-lg">✖</button>
+
+        <!-- Judul -->
+        <h2 class="text-2xl font-bold mb-2">Fitur Lengkap Aplikasi</h2>
+        <p class="text-gray-500 mb-6 text-sm">
+            Berikut adalah fitur utama dalam sistem untuk mendukung program MBG berbasis AI.
+        </p>
+
+        <!-- GRID FITUR -->
+        <div class="grid md:grid-cols-2 gap-6">
+
+            <!-- 1 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">🔥 Cek Kalori Otomatis</h3>
+                <p class="text-sm text-gray-500">
+                    Pengguna dapat memasukkan jenis dan berat makanan untuk mendapatkan estimasi kalori secara otomatis menggunakan AI.
+                </p>
+            </div>
+
+            <!-- 2 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">📊 Status Nutrisi</h3>
+                <p class="text-sm text-gray-500">
+                    Sistem memberikan informasi apakah makanan tersebut sesuai, berlebih, atau kurang dari kebutuhan kalori harian.
+                </p>
+            </div>
+
+            <!-- 3 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">📦 Distribusi Pangan MBG</h3>
+                <p class="text-sm text-gray-500">
+                    Admin dapat mengelola dan memantau penyaluran makanan kepada penerima program MBG secara terstruktur.
+                </p>
+            </div>
+
+            <!-- 4 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">👤 Data Penerima</h3>
+                <p class="text-sm text-gray-500">
+                    Menyimpan dan menampilkan data penerima bantuan makanan untuk memastikan distribusi tepat sasaran.
+                </p>
+            </div>
+
+            <!-- 5 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">🔔 Notifikasi</h3>
+                <p class="text-sm text-gray-500">
+                    Pengguna akan mendapatkan notifikasi terkait status penerimaan makanan dan update penting lainnya.
+                </p>
+            </div>
+
+            <!-- 6 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">📜 Riwayat Penerimaan</h3>
+                <p class="text-sm text-gray-500">
+                    Menampilkan riwayat distribusi makanan yang telah diterima oleh pengguna secara transparan.
+                </p>
+            </div>
+
+            <!-- 7 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">📈 Dashboard Admin</h3>
+                <p class="text-sm text-gray-500">
+                    Menyediakan ringkasan data seperti total penerima, distribusi, dan laporan dalam bentuk grafik.
+                </p>
+            </div>
+
+            <!-- 8 -->
+            <div class="border p-5 rounded-xl">
+                <h3 class="font-bold text-lg mb-2">🍽️ Manajemen Menu</h3>
+                <p class="text-sm text-gray-500">
+                    Admin dapat mengelola data makanan serta melakukan pencarian menu untuk kebutuhan sistem.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+<script>
+function openModal() {
+    document.getElementById('fiturModal').classList.remove('hidden');
+    document.getElementById('fiturModal').classList.add('flex');
+}
+
+function closeModal() {
+    document.getElementById('fiturModal').classList.add('hidden');
+    document.getElementById('fiturModal').classList.remove('flex');
+}
+</script>
 <body class="bg-white text-gray-800 antialiased selection:bg-emerald-200 selection:text-emerald-900">
 
     <nav class="w-full bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-50">
@@ -16,15 +111,15 @@
                 <span class="text-emerald-600 mr-1">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                 </span>
-                Vitality<span class="font-medium text-gray-600">Core</span>
+                GIZENIA<span class="font-medium text-gray-600"></span>
             </div>
 
             <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-500">
-                <a href="#" class="text-emerald-600 border-b-2 border-emerald-600 pb-1">Tentang Kami</a>
-                <a href="#" class="hover:text-emerald-600 transition">Layanan</a>
-                <a href="#" class="hover:text-emerald-600 transition">Nutrisi</a>
-                <a href="#" class="hover:text-emerald-600 transition">Kontak</a>
-            </div>
+                <a href="#tentang" class="hover:text-emerald-600 transition">Tentang Kami</a>
+                <a href="#layanan" class="hover:text-emerald-600 transition">Layanan</a>
+                <a href="#nutrisi" class="hover:text-emerald-600 transition">Nutrisi</a>
+                <a href="#kontak" class="hover:text-emerald-600 transition">Kontak</a>
+        </div>
 
             <div>
                 <a href="/login" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm shadow-emerald-200 transition-all">
@@ -34,7 +129,7 @@
         </div>
     </nav>
 
-    <section class="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center relative">
+    <section id="tentang" class="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center relative">
         <div class="hidden lg:flex absolute top-32 right-[45%] bg-white px-4 py-2 rounded-full shadow-lg items-center space-x-2 z-20 border border-gray-50">
             <div class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -44,7 +139,7 @@
 
         <div class="max-w-2xl">
             <span class="inline-block bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-6">
-                AI-Powered Wellness
+                AI-Powered
             </span>
             <h1 class="text-4xl lg:text-[54px] font-extrabold text-gray-900 leading-[1.1] tracking-tight mb-6">
                 Kembalikan <span class="text-emerald-600 italic font-bold">Keseimbangan</span><br>Nutrisi Anda.
@@ -108,15 +203,15 @@
         </div>
     </section>
 
-    <section id="fitur" class="max-w-7xl mx-auto px-6 lg:px-8 py-24">
+    <section id="layanan" class="max-w-7xl mx-auto px-6 lg:px-8 py-24">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12">
             <div class="max-w-xl mb-6 md:mb-0">
                 <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Solusi Nutrisi Pintar</h2>
                 <p class="text-sm text-gray-500 leading-relaxed">Kami mengintegrasikan teknologi AI tercanggih untuk memastikan setiap aspek kebutuhan pangan Anda terpenuhi dengan presisi maksimal.</p>
             </div>
-            <a href="#" class="text-emerald-600 text-sm font-bold flex items-center hover:text-emerald-700 transition">
-                Lihat Semua Fitur <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-            </a>
+            <a href="#" onclick="openModal()" class="text-emerald-600 text-sm font-bold">
+    Lihat Semua Fitur →
+</a>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
@@ -124,26 +219,62 @@
                 <div class="w-10 h-10 bg-emerald-600 text-white rounded-lg flex items-center justify-center mb-6">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-3">Edukasi Nutrisi</h3>
-                <p class="text-xs text-gray-500 leading-relaxed">Dapatkan wawasan diet berbasis AI yang dipersonalisasi sesuai dengan kondisi kesehatan dan tujuan hidup Anda.</p>
+                <h3 class="text-lg font-bold text-gray-900 mb-3">Cek Kalori Otomatis</h3>
+                <p class="text-xs text-gray-500 leading-relaxed">Hitung kebutuhan kalori berdasarkan jenis dan berat makanan secara otomatis menggunakan AI.</p>
             </div>
             <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)] hover:-translate-y-1 transition-transform duration-300">
                 <div class="w-10 h-10 bg-emerald-600 text-white rounded-lg flex items-center justify-center mb-6">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-3">Pelacakan Makanan</h3>
-                <p class="text-xs text-gray-500 leading-relaxed">Pemantauan kalori dan nutrien secara real-time melalui analisis gambar dan integrasi perangkat wearable.</p>
+                <h3 class="text-lg font-bold text-gray-900 mb-3">Distribusi Pangan MBG</h3>
+                <p class="text-xs text-gray-500 leading-relaxed">Mengelola dan memantau penyaluran makanan kepada penerima program MBG secara terstruktur.</p>
             </div>
             <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)] hover:-translate-y-1 transition-transform duration-300">
                 <div class="w-10 h-10 bg-emerald-600 text-white rounded-lg flex items-center justify-center mb-6">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-3">Distribusi Pangan</h3>
-                <p class="text-xs text-gray-500 leading-relaxed">Manajemen rantai pasok pangan yang efisien untuk memastikan ketersediaan makanan sehat di wilayah Anda.</p>
+                <h3 class="text-lg font-bold text-gray-900 mb-3">Monitoring & Riwayat</h3>
+                <p class="text-xs text-gray-500 leading-relaxed">Melihat riwayat penerimaan makanan dan status distribusi secara transparan dan real-time.</p>
             </div>
         </div>
     </section>
+    <section id="nutrisi" class="bg-white py-24">
+    <div class="max-w-7xl mx-auto px-6">
 
+        <h2 class="text-3xl font-bold mb-6 text-center">Informasi Nutrisi</h2>
+        <p class="text-gray-500 text-center mb-12 max-w-2xl mx-auto">
+            Pelajari dasar nutrisi untuk membantu Anda memahami hasil perhitungan kalori dari sistem kami.
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <!-- 1 -->
+            <div class="bg-gray-50 p-6 rounded-xl shadow">
+                <h3 class="font-bold mb-2">Apa itu Kalori?</h3>
+                <p class="text-sm text-gray-500">
+                    Kalori adalah energi yang dibutuhkan tubuh untuk beraktivitas. Kebutuhan setiap orang berbeda.
+                </p>
+            </div>
+
+            <!-- 2 -->
+            <div class="bg-gray-50 p-6 rounded-xl shadow">
+                <h3 class="font-bold mb-2">Status Nutrisi</h3>
+                <p class="text-sm text-gray-500">
+                    Sistem akan menentukan apakah asupan Anda kurang, cukup, atau berlebih berdasarkan perhitungan AI.
+                </p>
+            </div>
+
+            <!-- 3 -->
+            <div class="bg-gray-50 p-6 rounded-xl shadow">
+                <h3 class="font-bold mb-2">Tips Pola Makan</h3>
+                <p class="text-sm text-gray-500">
+                    Konsumsi makanan seimbang yang mengandung karbohidrat, protein, dan serat untuk kesehatan optimal.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</section>
     <section class="max-w-7xl mx-auto px-6 lg:px-8 pb-24">
         <div class="relative bg-emerald-700 rounded-[2.5rem] p-12 lg:p-20 text-center text-white overflow-hidden shadow-2xl">
             <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=1500&q=80')] bg-cover bg-center mix-blend-multiply"></div>
@@ -158,30 +289,40 @@
             </div>
         </div>
     </section>
-
-    <footer class="bg-white border-t border-gray-100 pt-16 pb-8">
+    
+    <footer id="kontak" class="bg-white border-t border-gray-100 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-12">
             <div>
                 <div class="font-extrabold text-lg tracking-tight text-gray-900 mb-4 flex items-center">
                     <span class="text-emerald-600 mr-1"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></span>
-                    Vitality<span class="text-gray-600 font-medium">Core</span>
+                    GIZENIA<span class="text-gray-600 font-medium"></span>
                 </div>
-                <p class="text-xs text-gray-500 leading-relaxed">Elevating Nutrition through Precision. Solusi masa depan untuk kesehatan optimal Anda.</p>
+                <p class="text-xs text-gray-500 leading-relaxed">Prediksi kalori harian dengan AI untuk mendukung program MBG yang lebih sehat dan tepat.</p>
             </div>
             <div>
                 <h4 class="font-bold text-gray-900 text-sm mb-4">Navigasi</h4>
                 <ul class="space-y-3 text-xs text-gray-500">
-                    <li><a href="#" class="hover:text-emerald-600 transition">Tentang Kami</a></li>
-                    <li><a href="#" class="hover:text-emerald-600 transition">Layanan</a></li>
-                    <li><a href="#" class="hover:text-emerald-600 transition">Nutrisi</a></li>
-                    <li><a href="#" class="hover:text-emerald-600 transition">Kontak</a></li>
+                    <li><a href="#tentang" class="hover:text-emerald-600 transition">Tentang Kami</a></li>
+                    <li><a href="#layanan" class="hover:text-emerald-600 transition">Layanan</a></li>
+                    <li><a href="#nutrisi" class="hover:text-emerald-600 transition">Nutrisi</a></li>
+                    <li><a href="#kontak" class="hover:text-emerald-600 transition">Kontak</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="font-bold text-gray-900 text-sm mb-4">Legal</h4>
+                <h4 class="font-bold text-gray-900 text-sm mb-4">Kontak</h4>
                 <ul class="space-y-3 text-xs text-gray-500">
-                    <li><a href="#" class="hover:text-emerald-600 transition">Privacy Policy</a></li>
-                    <li><a href="#" class="hover:text-emerald-600 transition">Terms of Service</a></li>
+                    <li>
+                        Email: 
+                        <a href="mailto:support@vitalitycore.com" class="hover:text-emerald-600">
+                        gizeniaaaaa@gmail.com
+                        </a>
+                    </li>
+                    <li>
+                        WhatsApp: 
+                        <a href="https://wa.me/6282331215252" class="hover:text-emerald-600">
+                        +62 8223-3121-5252
+                        </a>
+                </li>
                 </ul>
             </div>
             <div>
@@ -194,7 +335,7 @@
         </div>
         
         <div class="max-w-7xl mx-auto px-6 lg:px-8 pt-8 border-t border-gray-100 text-center">
-            <p class="text-[10px] text-gray-400">© 2024 Vitality Core. Elevating Nutrition through Precision.</p>
+            <p class="text-[10px] text-gray-400">© 2024 GIZENIA. Elevating Nutrition with Intelligent Calorie Prediction.</p>
         </div>
     </footer>
 <div class="fixed bottom-6 right-6 z-50 font-sans">
@@ -205,7 +346,7 @@
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm">Vitality Assistant</h4>
+                        <h4 class="font-bold text-sm">GIZENIA AI</h4>
                         <p class="text-[10px] text-emerald-100 flex items-center"><span class="w-1.5 h-1.5 bg-green-300 rounded-full mr-1.5 animate-pulse"></span> Online</p>
                     </div>
                 </div>
@@ -220,7 +361,7 @@
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                     </div>
                     <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-600 leading-relaxed">
-                        Halo! Saya asisten AI VitalityCore. Ada yang bisa saya bantu mengenai nutrisi atau pendaftaran hari ini? 🌱
+                        Halo! Saya GIZENIA AI. Ada yang bisa saya bantu mengenai nutrisi atau pendaftaran hari ini? 🌱
                     </div>
                 </div>
             </div>
@@ -257,7 +398,6 @@
                 isChatOpen = !isChatOpen;
                 if (isChatOpen) {
                     chatWindow.classList.remove('hidden');
-                    // setTimeout trick for transition to trigger
                     setTimeout(() => {
                         chatWindow.classList.remove('scale-95', 'opacity-0');
                         chatWindow.classList.add('scale-100', 'opacity-100', 'flex');
@@ -275,12 +415,12 @@
             chatToggleBtn.addEventListener('click', toggleChat);
             closeChat.addEventListener('click', toggleChat);
 
-            // Fungsi Kirim Pesan
-            function sendMessage() {
+            // MENGIRIM PESAN KE PYTHON (AI)
+            async function sendMessage() {
                 const message = chatInput.value.trim();
                 if (!message) return;
 
-                // Tambahkan pesan User
+                // 1. Tambahkan pesan User ke layar
                 const userBubble = `
                 <div class="flex items-end justify-end max-w-[85%] self-end">
                     <div class="bg-emerald-600 text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm leading-relaxed">
@@ -291,20 +431,63 @@
                 chatInput.value = '';
                 scrollToBottom();
 
-                // Simulasi AI Mengetik & Membalas
-                setTimeout(() => {
-                    const botBubble = `
+                // 2. Tampilkan indikator "Mengetik..." sementara AI berpikir
+                const loadingId = 'loading-' + Date.now();
+                const loadingBubble = `
+                <div id="${loadingId}" class="flex items-start max-w-[85%]">
+                    <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center shrink-0 mr-2 mt-1">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-xs text-gray-500 italic">
+                        AI sedang mengetik...
+                    </div>
+                </div>`;
+                chatMessages.insertAdjacentHTML('beforeend', loadingBubble);
+                scrollToBottom();
+
+                try {
+                    // 3. Tembak API Chatbot Python
+                    const response = await fetch('http://127.0.0.1:5000/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+                    
+                    // 4. Hapus tulisan "Mengetik..."
+                    document.getElementById(loadingId).remove();
+
+                    // 5. Tampilkan balasan asli dari AI Python
+                    if (data.status === 'success') {
+                        const botBubble = `
+                        <div class="flex items-start max-w-[85%]">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mr-2 mt-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                            </div>
+                            <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-600 leading-relaxed">
+                                ${data.reply}
+                            </div>
+                        </div>`;
+                        chatMessages.insertAdjacentHTML('beforeend', botBubble);
+                    } else {
+                        throw new Error(data.message || "Error server");
+                    }
+
+                } catch (error) {
+                    // Jika Python belum nyala / error
+                    document.getElementById(loadingId).remove();
+                    const errorBubble = `
                     <div class="flex items-start max-w-[85%]">
-                        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mr-2 mt-1">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                        </div>
-                        <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-600 leading-relaxed">
-                            Terima kasih atas pesan Anda! Saat ini saya masih dalam versi simulasi awal. Silakan klik tombol <strong>"Mulai Sekarang"</strong> untuk membuat akun dan menggunakan fitur penuhmnya! ✨
+                        <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mr-2 mt-1">!</div>
+                        <div class="bg-red-50 border border-red-100 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-red-600 leading-relaxed">
+                            Aduh, saya tidak bisa terhubung ke server utama. Pastikan terminal Python (Flask) sudah dinyalakan ya!
                         </div>
                     </div>`;
-                    chatMessages.insertAdjacentHTML('beforeend', botBubble);
-                    scrollToBottom();
-                }, 1000);
+                    chatMessages.insertAdjacentHTML('beforeend', errorBubble);
+                }
+                
+                scrollToBottom();
             }
 
             // Scroll ke bawah saat ada pesan baru
