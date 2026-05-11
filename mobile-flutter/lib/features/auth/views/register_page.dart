@@ -1,8 +1,7 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
+import '../controllers/auth_controller.dart'; 
 
 class RegisterPage extends StatelessWidget {
   RegisterPage({super.key});
@@ -19,8 +18,10 @@ class RegisterPage extends StatelessWidget {
   // State lokal untuk UI statis menggunakan Rx (GetX)
   final isObscure = true.obs;
   final isConfirmObscure = true.obs;
-  final isChecked = false.obs;
+  
   final selectedKelas = '1'.obs; // Default kelas 1
+
+  final authController = Get.put(AuthController());
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +55,7 @@ class RegisterPage extends StatelessWidget {
                 onTap: () => Get.back(),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.arrow_back,
-                      color: Colors.green.shade800,
-                      size: 18,
-                    ),
+                    Icon(Icons.arrow_back, color: Colors.green.shade800, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       "KEMBALI KE LOGIN",
@@ -77,11 +74,7 @@ class RegisterPage extends StatelessWidget {
               // 3. Judul Halaman
               const Text(
                 "Buat Akun",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
-                ),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
               ),
               const SizedBox(height: 8),
               Text(
@@ -91,166 +84,65 @@ class RegisterPage extends StatelessWidget {
               const SizedBox(height: 32),
 
               // 4. Form Inputs
-              _buildInputField(
-                "Nama Lengkap",
-                "Masukkan nama",
-                Icons.person,
-                nameController,
-              ),
-              _buildInputField(
-                "Alamat Email",
-                "nama@email.com",
-                Icons.email,
-                emailController,
-                type: TextInputType.emailAddress,
-              ),
-
+              _buildInputField("Nama Lengkap", "Masukkan nama", Icons.person, nameController),
+              _buildInputField("Alamat Email", "nama@email.com", Icons.email, emailController, type: TextInputType.emailAddress),
+              
               // Input Kata Sandi dengan fitur hide/show
-              _buildPasswordField(
-                "Kata Sandi",
-                "••••••••",
-                passwordController,
-                isObscure,
-              ),
-              _buildPasswordField(
-                "Konfirmasi Kata Sandi",
-                "••••••••",
-                confirmPasswordController,
-                isConfirmObscure,
-              ),
+              _buildPasswordField("Kata Sandi", "••••••••", passwordController, isObscure),
+              
               // 5. Grid untuk Umur, Kelas, Berat, dan Tinggi Badan
               Row(
                 children: [
-                  Expanded(
-                    child: _buildInputField(
-                      "Usia (Thn)",
-                      "Mis: 20",
-                      Icons.cake,
-                      ageController,
-                      type: TextInputType.number,
-                    ),
-                  ),
+                  Expanded(child: _buildInputField("Usia (Thn)", "Mis: 20", Icons.cake, ageController, type: TextInputType.number)),
                   const SizedBox(width: 16),
                   Expanded(child: _buildDropdownKelas()), // Dropdown Kelas 1-6
                 ],
               ),
               Row(
                 children: [
-                  Expanded(
-                    child: _buildInputField(
-                      "Berat (Kg)",
-                      "Mis: 55",
-                      Icons.monitor_weight,
-                      weightController,
-                      type: TextInputType.number,
-                    ),
-                  ),
+                  Expanded(child: _buildInputField("Berat (Kg)", "Mis: 55", Icons.monitor_weight, weightController, type: TextInputType.number)),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildInputField(
-                      "Tinggi (Cm)",
-                      "Mis: 165",
-                      Icons.height,
-                      heightController,
-                      type: TextInputType.number,
-                    ),
-                  ),
+                  Expanded(child: _buildInputField("Tinggi (Cm)", "Mis: 165", Icons.height, heightController, type: TextInputType.number)),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // 6. Checkbox Syarat & Ketentuan
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(
-                    () => SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: isChecked.value,
-                        onChanged: (val) => isChecked.value = val ?? false,
-                        activeColor: Colors.green.shade800,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade800,
-                          height: 1.5,
-                        ),
-                        children: [
-                          const TextSpan(text: "Saya setuju dengan "),
-                          TextSpan(
-                            text: "Syarat & Ketentuan",
-                            style: TextStyle(
-                              color: Colors.green.shade800,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const TextSpan(text: " dan "),
-                          TextSpan(
-                            text: "Kebijakan Privasi",
-                            style: TextStyle(
-                              color: Colors.green.shade800,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const TextSpan(text: " dari GIZENIA."),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // 7. Tombol Daftar
-              ElevatedButton(
-                onPressed: () async {
-                  await register();
+              Obx(() => ElevatedButton(
+  onPressed: authController.isLoading.value
+      ? null
+      : () {
+                  // Memanggil fungsi register dari AuthController
+                  authController.register({
+                    "name": nameController.text,
+                    "email": emailController.text,
+                    "password": passwordController.text,
+                    "age": int.tryParse(ageController.text) ?? 0,
+                    "weight": double.tryParse(weightController.text) ?? 0.0,
+                    "height": double.tryParse(heightController.text) ?? 0.0,
+                    "class_room": "Kelas ${selectedKelas.value}",
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 55),
                   backgroundColor: const Color(0xFF22762A), // Warna hijau gelap
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   elevation: 2,
                 ),
-                child: const Text(
-                  "Buat Akun",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+                child: authController.isLoading.value
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text("Buat Akun", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              )),
               const SizedBox(height: 32),
 
               // 8. Footer Login Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "Sudah menjadi bagian dari kami? ",
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-                  ),
+                  Text("Sudah menjadi bagian dari kami? ", style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
                   GestureDetector(
                     onTap: () => Get.offAllNamed(Routes.LOGIN),
-                    child: Text(
-                      "Masuk di sini",
-                      style: TextStyle(
-                        color: Colors.green.shade800,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
+                    child: Text("Masuk di sini", style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
@@ -262,90 +154,15 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
-  Future<void> register() async {
-    if (passwordController.text != confirmPasswordController.text) {
-      Get.snackbar(
-        "Error",
-        "Password tidak sama",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    try {
-      final url = Uri.parse('http://192.168.1.14:8000/api/auth/register');
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'name': nameController.text.trim(),
-          'email': emailController.text.trim(),
-          'password': passwordController.text.trim(),
-          'password_confirmation': confirmPasswordController.text.trim(),
-          'age': ageController.text.trim(),
-          'class': selectedKelas.value,
-          'weight': weightController.text.trim(),
-          'height': heightController.text.trim(),
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar(
-          "Berhasil",
-          "Akun berhasil dibuat",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-
-        Get.offAllNamed(Routes.LOGIN);
-      } else {
-        Get.snackbar(
-          "Gagal",
-          data['message'] ?? 'Register gagal',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-    }
-  }
-
   // --- WIDGET HELPERS --- //
 
-  // Helper untuk input teks standar
-  Widget _buildInputField(
-    String label,
-    String hint,
-    IconData icon,
-    TextEditingController controller, {
-    TextInputType type = TextInputType.text,
-  }) {
+  Widget _buildInputField(String label, String hint, IconData icon, TextEditingController controller, {TextInputType type = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
           const SizedBox(height: 8),
           TextField(
             controller: controller,
@@ -356,10 +173,7 @@ class RegisterPage extends StatelessWidget {
               prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 20),
               filled: true,
               fillColor: const Color(0xFFF4F5F4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
@@ -368,77 +182,43 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
-  // Helper untuk input password (dengan mata hide/show)
-  Widget _buildPasswordField(
-    String label,
-    String hint,
-    TextEditingController controller,
-    RxBool isObscure,
-  ) {
+  Widget _buildPasswordField(String label, String hint, TextEditingController controller, RxBool isObscure) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
           const SizedBox(height: 8),
-          Obx(
-            () => TextField(
-              controller: controller,
-              obscureText: isObscure.value,
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                prefixIcon: Icon(
-                  Icons.lock,
-                  color: Colors.grey.shade500,
-                  size: 20,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    isObscure.value ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey.shade500,
-                    size: 20,
-                  ),
-                  onPressed: () => isObscure.value = !isObscure.value,
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF4F5F4),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          Obx(() => TextField(
+            controller: controller,
+            obscureText: isObscure.value,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              prefixIcon: Icon(Icons.lock, color: Colors.grey.shade500, size: 20),
+              suffixIcon: IconButton(
+                icon: Icon(isObscure.value ? Icons.visibility_off : Icons.visibility, color: Colors.grey.shade500, size: 20),
+                onPressed: () => isObscure.value = !isObscure.value,
               ),
+              filled: true,
+              fillColor: const Color(0xFFF4F5F4),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
-          ),
+          )),
         ],
       ),
     );
   }
 
-  // Helper khusus untuk Dropdown Kelas 1-6
   Widget _buildDropdownKelas() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Kelas",
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
+          const Text("Kelas", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -446,40 +226,28 @@ class RegisterPage extends StatelessWidget {
               color: const Color(0xFFF4F5F4),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Obx(
-              () => DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: selectedKelas.value,
-                  isExpanded: true,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.grey.shade500,
-                  ),
-                  items: ["1", "2", "3", "4", "5", "6"].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.school,
-                            color: Colors.grey.shade500,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            "Kelas $value",
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    if (newValue != null) selectedKelas.value = newValue;
-                  },
-                ),
+            child: Obx(() => DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedKelas.value,
+                isExpanded: true,
+                icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade500),
+                items: ["1", "2", "3", "4", "5", "6"].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Row(
+                      children: [
+                        Icon(Icons.school, color: Colors.grey.shade500, size: 20),
+                        const SizedBox(width: 12),
+                        Text("Kelas $value", style: const TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  if (newValue != null) selectedKelas.value = newValue;
+                },
               ),
-            ),
+            )),
           ),
         ],
       ),

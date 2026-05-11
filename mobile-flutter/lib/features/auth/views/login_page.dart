@@ -1,39 +1,18 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
+import '../controllers/auth_controller.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  
+  //Get.put() untuk memasukkan Controller ke memori aplikasi
+  final authController = Get.put(AuthController()); 
 
-  Future login() async {
-  final response = await http.post(
-    Uri.parse('http://192.168.1.14:8000/api/auth/login'),
-    body: {
-      'email': emailController.text,
-      'password': passwordController.text,
-    },
-  );
-
-  final data = jsonDecode(response.body);
-
-  print(data);
-
-  if (response.statusCode == 200) {
-    Get.snackbar("Berhasil", "Login berhasil");
-
-    Get.offAllNamed(Routes.MAIN);
-  } else {
-    Get.snackbar(
-      "Login Gagal",
-      data['message'] ?? 'Terjadi kesalahan',
-    );
-  }
-}
+   final isPasswordHidden = true.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -59,9 +38,7 @@ class LoginPage extends StatelessWidget {
                       offset: const Offset(0, 10),
                     )
                   ],
-                  
                 ),
-                // Icon sementara sebelum gambar asli dimasukkan
                 child: Center(
                   child: Icon(Icons.food_bank, size: 60, color: Colors.green.shade800),
                 ),
@@ -144,46 +121,68 @@ class LoginPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: "••••••••",
-                        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                        prefixIcon: Icon(Icons.lock_outline, color: Colors.grey.shade400, size: 20),
-                        suffixIcon: Icon(Icons.visibility_outlined, color: Colors.grey.shade400, size: 20),
-                        filled: true,
-                        fillColor: const Color(0xFFF4F5F4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
+                   Obx(() => TextField(
+  controller: passwordController,
+  obscureText: isPasswordHidden.value,
+  decoration: InputDecoration(
+    hintText: "••••••••",
+    hintStyle: TextStyle(
+      color: Colors.grey.shade500,
+      fontSize: 14,
+    ),
+    prefixIcon: Icon(
+      Icons.lock_outline,
+      color: Colors.grey.shade400,
+      size: 20,
+    ),
+
+    suffixIcon: IconButton(
+      icon: Icon(
+        isPasswordHidden.value
+            ? Icons.visibility_off_outlined
+            : Icons.visibility_outlined,
+        color: Colors.grey.shade400,
+        size: 20,
+      ),
+      onPressed: () {
+        isPasswordHidden.value =
+            !isPasswordHidden.value;
+      },
+    ),
+
+    filled: true,
+    fillColor: const Color(0xFFF4F5F4),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    contentPadding:
+        const EdgeInsets.symmetric(vertical: 16),
+  ),
+)),
                     const SizedBox(height: 32),
 
-                    // Tombol Masuk
-                    ElevatedButton(
-                      // Statis: Langsung diarahkan ke halaman MAIN
-                      onPressed: () {
-  login();
-},
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 55),
-                        backgroundColor: const Color(0xFF22762A), // Hijau gelap sesuai gambar
-                        foregroundColor: Colors.white,
-                        elevation: 4,
-                        shadowColor: Colors.green.withValues(alpha: 0.3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                    // Tombol Masuk yang Dinamis & Terhubung ke Laravel
+                    SizedBox(
+                      width: double.infinity,
+                      child: Obx(() => ElevatedButton(
+                        // Jika sedang loading, tombol mati. Jika tidak, jalankan fungsi login.
+                        onPressed: authController.isLoading.value 
+                            ? null 
+                            : () => authController.login(emailController.text, passwordController.text),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade800,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                      ),
-                      child: const Text(
-                        "Masuk Ke Akun",
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
+                        // Menampilkan indikator loading atau teks berdasarkan status
+                        child: authController.isLoading.value
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text(
+                                "Masuk",
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                      )),
                     ),
                   ],
                 ),
