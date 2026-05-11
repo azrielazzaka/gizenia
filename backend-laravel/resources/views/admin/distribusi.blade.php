@@ -122,205 +122,477 @@
 
 <script>
     const token = localStorage.getItem('jwt_token');
-    if (!token) window.location.href = '/login';
 
-    let availableMenus = [];
-    let allDistData = [];
-    let isEditMode = false;
-    let currentDistId = null;
-    let distToDeleteId = null;
-    let currentPage = 1;
+if (!token) {
+    window.location.href = '/login';
+}
 
-    function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+let availableMenus = [];
+let allDistData = [];
+let isEditMode = false;
+let currentDistId = null;
+let distToDeleteId = null;
+let currentPage = 1;
+let payloadToSubmit = null;
 
-    // 1. Ambil Menu
-    async function loadMenusForDropdown() {
-        try {
-            const res = await fetch('/api/menus', { headers: { 'Authorization': `Bearer ${token}` }});
-            availableMenus = await res.json();
-        } catch (e) { console.error("Gagal memuat menu"); }
-    }
+/* =========================================================
+   MODAL
+========================================================= */
+function toggleModal(id, show = null) {
+    const modal = document.getElementById(id);
 
-    function populateSelect(selectElement) {
-        selectElement.innerHTML = '<option value="">-- Pilih Menu Makanan --</option>';
-        availableMenus.forEach(menu => {
-            const id = menu._id || menu.id;
-            selectElement.innerHTML += `<option value="${id}" data-name="${menu.name}">${menu.name}</option>`;
-        });
-    }
+    if (!modal) return;
 
-    // Fungsi Tambah Baris Makanan
-    function addFoodRow(menuId = '', weight = '') {
-        const container = document.getElementById('foodListContainer');
-        const row = document.createElement('div');
-        row.className = 'flex space-x-3 food-row mt-3';
-        row.innerHTML = `
-            <select class="food-select flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none" required></select>
-            <input type="number" class="food-weight w-32 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none" placeholder="Berat (g)" value="${weight}" required>
-            <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 px-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-        `;
-        container.appendChild(row);
-        const select = row.querySelector('.food-select');
-        populateSelect(select);
-        if(menuId) select.value = menuId;
-    }
+    const isHidden = modal.classList.contains('hidden');
 
-    // 2. Fetch Data
-    async function fetchDistributions(page = 1) {
-        currentPage = page;
-        try {
-            const res = await fetch(`/api/distributions?page=${page}`, { headers: { 'Authorization': `Bearer ${token}` }});
-            const data = await res.json();
-            allDistData = data.data; // Simpan untuk Edit
-            
-            const tbody = document.getElementById('distTableBody');
-            tbody.innerHTML = '';
+    if (show === true || (show === null && isHidden)) {
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    } else {
+        modal.classList.add('hidden');
 
-            if (data.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400">Belum ada riwayat distribusi.</td></tr>';
-            } else {
-                data.data.forEach(dist => {
-                    const distId = dist._id || dist.id;
-                    const foodHtml = dist.foods.map(f => `<span class="inline-block bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded mr-1 mb-1">${f.name} (${f.weight}g)</span>`).join('');
-                    const classHtml = dist.target_classes.map(c => `<span class="inline-block bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded mr-1 mb-1">${c}</span>`).join('');
-                    
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="py-4 px-6 font-bold text-gray-800 text-xs">${dist.distribution_date}</td>
-                            <td class="py-4 px-6">${foodHtml}</td>
-                            <td class="py-4 px-6">${classHtml}</td>
-                            <td class="py-4 px-6 text-center"><span class="text-xs font-bold text-emerald-600"><i class="fas fa-check-circle"></i> Terkirim</span></td>
-                            <td class="py-4 px-6 text-right space-x-3">
-                                <button onclick="editDist('${distId}')" class="text-blue-500 hover:text-blue-700 font-semibold text-xs">Edit</button>
-                                <button onclick="promptDeleteDist('${distId}')" class="text-red-500 hover:text-red-700 font-semibold text-xs">Hapus</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
+        // cek apakah masih ada modal lain terbuka
+        const openedModal = document.querySelector(
+            '#distModal:not(.hidden), #confirmDistModal:not(.hidden), #successDistModal:not(.hidden), #deleteDistModal:not(.hidden)'
+        );
 
-            // Render Paginasi
-            document.getElementById('paginationInfo').innerText = `Menampilkan ${data.from || 0} - ${data.to || 0} dari ${data.total} distribusi`;
-            const controls = document.getElementById('paginationControls');
-            controls.innerHTML = '';
-            if (data.current_page > 1) controls.innerHTML += `<button onclick="fetchDistributions(${data.current_page - 1})" class="px-3 py-1 bg-white border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 text-xs font-medium transition">Prev</button>`;
-            controls.innerHTML += `<span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-xs font-bold">${data.current_page} / ${data.last_page}</span>`;
-            if (data.current_page < data.last_page) controls.innerHTML += `<button onclick="fetchDistributions(${data.current_page + 1})" class="px-3 py-1 bg-white border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 text-xs font-medium transition">Next</button>`;
-
-        } catch (e) { console.error(e); }
-    }
-
-    // 3. CREATE / EDIT Modal Logic
-    function openModalForAdd() {
-        isEditMode = false;
-        currentDistId = null;
-        document.getElementById('distForm').reset();
-        document.getElementById('modalTitle').innerText = "Distribusi Makanan Baru";
-        document.getElementById('foodListContainer').innerHTML = '';
-        addFoodRow(); // Tambah 1 baris kosong
-        
-        // Uncheck all
-        document.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
-        toggleModal('distModal');
-    }
-
-    function editDist(id) {
-        isEditMode = true;
-        currentDistId = id;
-        document.getElementById('modalTitle').innerText = "Edit Distribusi Makanan";
-        
-        const dist = allDistData.find(d => (d._id === id || d.id === id));
-        if(dist) {
-            // Isi ulang makanan
-            document.getElementById('foodListContainer').innerHTML = '';
-            dist.foods.forEach(f => addFoodRow(f.menu_id, f.weight));
-            
-            // Isi ulang checkbox kelas
-            document.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
-            dist.target_classes.forEach(c => {
-                const cb = document.querySelector(`.class-checkbox[value="${c}"]`);
-                if(cb) cb.checked = true;
-            });
-            
-            toggleModal('distModal');
+        if (!openedModal) {
+            document.body.classList.remove('overflow-hidden');
         }
     }
+}
 
-    // 4. Submit -> Buka Modal Konfirmasi
-    let payloadToSubmit = null; // Simpan sementara data sebelum dieksekusi
-
-    document.getElementById('distForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const foods = [];
-        document.querySelectorAll('.food-row').forEach(row => {
-            const select = row.querySelector('.food-select');
-            const weight = row.querySelector('.food-weight').value;
-            if(select.value && weight) {
-                foods.push({
-                    menu_id: select.value,
-                    name: select.options[select.selectedIndex].getAttribute('data-name'),
-                    weight: parseFloat(weight)
-                });
+/* =========================================================
+   LOAD MENU
+========================================================= */
+async function loadMenusForDropdown() {
+    try {
+        const res = await fetch('/api/menus', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
             }
         });
 
-        const targetClasses = [];
-        document.querySelectorAll('.class-checkbox:checked').forEach(cb => targetClasses.push(cb.value));
+        if (!res.ok) {
+            throw new Error('Gagal mengambil menu');
+        }
 
-        if(foods.length === 0) return alert('Pilih minimal 1 makanan!');
-        if(targetClasses.length === 0) return alert('Pilih minimal 1 kelas penerima!');
+        const result = await res.json();
 
-        payloadToSubmit = { foods, target_classes: targetClasses };
+        console.log('MENU RESPONSE:', result);
 
-        // Buka Pop-up Konfirmasi
-        toggleModal('distModal'); // Tutup modal form
-        toggleModal('confirmDistModal'); // Buka modal konfirmasi
+        availableMenus = result.data || result || [];
+
+    } catch (e) {
+        console.error('Gagal memuat menu:', e);
+        availableMenus = [];
+    }
+}
+
+function populateSelect(selectElement) {
+    selectElement.innerHTML = `
+        <option value="">-- Pilih Menu Makanan --</option>
+    `;
+
+    if (!Array.isArray(availableMenus)) {
+        console.error('availableMenus bukan array:', availableMenus);
+        return;
+    }
+
+    availableMenus.forEach(menu => {
+        const id = menu._id || menu.id;
+        const name =
+            menu.name ||
+            menu.nama ||
+            menu.nama_makanan ||
+            'Tanpa Nama';
+
+        selectElement.innerHTML += `
+            <option value="${id}" data-name="${name}">
+                ${name}
+            </option>
+        `;
+    });
+}
+
+/* =========================================================
+   TAMBAH ROW MAKANAN
+========================================================= */
+function addFoodRow(menuId = '', weight = '') {
+    const container = document.getElementById('foodListContainer');
+
+    const row = document.createElement('div');
+
+    row.className = 'flex space-x-3 food-row mt-3';
+
+    row.innerHTML = `
+        <select class="food-select flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none" required></select>
+
+        <input
+            type="number"
+            class="food-weight w-32 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none"
+            placeholder="Berat (g)"
+            value="${weight}"
+            required
+        >
+
+        <button
+            type="button"
+            onclick="this.parentElement.remove()"
+            class="text-red-400 hover:text-red-600 px-2"
+        >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+            </svg>
+        </button>
+    `;
+
+    container.appendChild(row);
+
+    const select = row.querySelector('.food-select');
+
+    populateSelect(select);
+
+    if (menuId) {
+        select.value = menuId;
+    }
+}
+
+/* =========================================================
+   FETCH DISTRIBUTIONS
+========================================================= */
+async function fetchDistributions(page = 1) {
+    currentPage = page;
+
+    try {
+        const res = await fetch(`/api/distributions?page=${page}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error('Gagal fetch distribusi');
+        }
+
+        const data = await res.json();
+
+        console.log('DIST RESPONSE:', data);
+
+        allDistData = data.data || [];
+
+        const tbody = document.getElementById('distTableBody');
+
+        tbody.innerHTML = '';
+
+        if (allDistData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="py-8 text-center text-gray-400">
+                        Belum ada riwayat distribusi.
+                    </td>
+                </tr>
+            `;
+        } else {
+            allDistData.forEach(dist => {
+                const distId = dist._id || dist.id;
+
+                const foodHtml = (dist.foods || [])
+                    .map(f => `
+                        <span class="inline-block bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded mr-1 mb-1">
+                            ${f.name} (${f.weight}g)
+                        </span>
+                    `)
+                    .join('');
+
+                const classHtml = (dist.target_classes || [])
+                    .map(c => `
+                        <span class="inline-block bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded mr-1 mb-1">
+                            ${c}
+                        </span>
+                    `)
+                    .join('');
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-6 font-bold text-gray-800 text-xs">
+                            ${dist.distribution_date || '-'}
+                        </td>
+
+                        <td class="py-4 px-6">
+                            ${foodHtml}
+                        </td>
+
+                        <td class="py-4 px-6">
+                            ${classHtml}
+                        </td>
+
+                        <td class="py-4 px-6 text-center">
+                            <span class="text-xs font-bold text-emerald-600">
+                                <i class="fas fa-check-circle"></i> Terkirim
+                            </span>
+                        </td>
+
+                        <td class="py-4 px-6 text-right space-x-3">
+                            <button
+                                onclick="editDist('${distId}')"
+                                class="text-blue-500 hover:text-blue-700 font-semibold text-xs"
+                            >
+                                Edit
+                            </button>
+
+                            <button
+                                onclick="promptDeleteDist('${distId}')"
+                                class="text-red-500 hover:text-red-700 font-semibold text-xs"
+                            >
+                                Hapus
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('paginationInfo').innerText =
+            `Menampilkan ${data.from || 0} - ${data.to || 0} dari ${data.total || 0} distribusi`;
+
+        const controls = document.getElementById('paginationControls');
+
+        controls.innerHTML = '';
+
+        if (data.current_page > 1) {
+            controls.innerHTML += `
+                <button
+                    onclick="fetchDistributions(${data.current_page - 1})"
+                    class="px-3 py-1 bg-white border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 text-xs font-medium transition"
+                >
+                    Prev
+                </button>
+            `;
+        }
+
+        controls.innerHTML += `
+            <span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-xs font-bold">
+                ${data.current_page || 1} / ${data.last_page || 1}
+            </span>
+        `;
+
+        if (data.current_page < data.last_page) {
+            controls.innerHTML += `
+                <button
+                    onclick="fetchDistributions(${data.current_page + 1})"
+                    class="px-3 py-1 bg-white border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 text-xs font-medium transition"
+                >
+                    Next
+                </button>
+            `;
+        }
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+/* =========================================================
+   OPEN MODAL ADD
+========================================================= */
+function openModalForAdd() {
+    isEditMode = false;
+    currentDistId = null;
+
+    document.getElementById('distForm').reset();
+
+    document.getElementById('modalTitle').innerText =
+        'Distribusi Makanan Baru';
+
+    document.getElementById('foodListContainer').innerHTML = '';
+
+    addFoodRow();
+
+    document.querySelectorAll('.class-checkbox')
+        .forEach(cb => cb.checked = false);
+
+    toggleModal('distModal', true);
+}
+
+/* =========================================================
+   EDIT
+========================================================= */
+function editDist(id) {
+    isEditMode = true;
+    currentDistId = id;
+
+    document.getElementById('modalTitle').innerText =
+        'Edit Distribusi Makanan';
+
+    const dist = allDistData.find(
+        d => (d._id === id || d.id === id)
+    );
+
+    if (!dist) return;
+
+    document.getElementById('foodListContainer').innerHTML = '';
+
+    (dist.foods || []).forEach(f => {
+        addFoodRow(f.menu_id, f.weight);
     });
 
-    // 5. Eksekusi API Distribusi (Setelah Klik Konfirmasi)
-    async function executeDistribute() {
-        const btn = document.getElementById('btnExecuteDist');
-        btn.innerText = 'Menyebarkan...'; btn.disabled = true;
+    document.querySelectorAll('.class-checkbox')
+        .forEach(cb => cb.checked = false);
 
-        const url = isEditMode ? `/api/distributions/${currentDistId}` : '/api/distributions';
-        const method = isEditMode ? 'PUT' : 'POST';
+    (dist.target_classes || []).forEach(c => {
+        const cb = document.querySelector(
+            `.class-checkbox[value="${c}"]`
+        );
 
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payloadToSubmit)
+        if (cb) cb.checked = true;
+    });
+
+    toggleModal('distModal', true);
+}
+
+/* =========================================================
+   SUBMIT FORM
+========================================================= */
+document.getElementById('distForm')
+.addEventListener('submit', function(e) {
+
+    e.preventDefault();
+
+    const foods = [];
+
+    document.querySelectorAll('.food-row').forEach(row => {
+
+        const select = row.querySelector('.food-select');
+
+        const weight = row.querySelector('.food-weight').value;
+
+        if (select.value && weight) {
+            foods.push({
+                menu_id: select.value,
+                name: select.options[select.selectedIndex]
+                    ?.getAttribute('data-name'),
+                weight: parseFloat(weight)
             });
+        }
+    });
 
-            if(res.ok) {
-                toggleModal('confirmDistModal'); // Tutup modal biru
-                fetchDistributions(currentPage); // Refresh tabel
-                
-                // MUNCULKAN POP-UP SUKSES
-                setTimeout(() => toggleModal('successDistModal'), 300);
+    const targetClasses = [];
+
+    document.querySelectorAll('.class-checkbox:checked')
+        .forEach(cb => targetClasses.push(cb.value));
+
+    if (foods.length === 0) {
+        alert('Pilih minimal 1 makanan!');
+        return;
+    }
+
+    if (targetClasses.length === 0) {
+        alert('Pilih minimal 1 kelas penerima!');
+        return;
+    }
+
+    payloadToSubmit = {
+        foods,
+        target_classes: targetClasses
+    };
+
+    toggleModal('distModal', false);
+    toggleModal('confirmDistModal', true);
+});
+
+/* =========================================================
+   EXECUTE DISTRIBUTE
+========================================================= */
+async function executeDistribute() {
+    const btn = document.getElementById('btnExecuteDist');
+
+    btn.innerText = 'Menyebarkan...';
+    btn.disabled = true;
+
+    const url = isEditMode
+        ? `/api/distributions/${currentDistId}`
+        : '/api/distributions';
+
+    const method = isEditMode ? 'PUT' : 'POST';
+
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payloadToSubmit)
+        });
+
+        if (!res.ok) {
+            throw new Error('Gagal distribusi');
+        }
+
+        toggleModal('confirmDistModal', false);
+
+        await fetchDistributions(currentPage);
+
+        setTimeout(() => {
+            toggleModal('successDistModal', true);
+        }, 300);
+
+    } catch (e) {
+        console.error(e);
+        alert('Terjadi kesalahan server');
+    } finally {
+        btn.innerText = 'Ya, Sebarkan!';
+        btn.disabled = false;
+    }
+}
+
+/* =========================================================
+   DELETE
+========================================================= */
+function promptDeleteDist(id) {
+    distToDeleteId = id;
+    toggleModal('deleteDistModal', true);
+}
+
+async function executeDeleteDist() {
+    try {
+        const res = await fetch(
+            `/api/distributions/${distToDeleteId}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
             }
-        } catch(e) { alert('Error server'); }
-        finally { btn.innerText = 'Ya, Sebarkan!'; btn.disabled = false; }
-    }
+        );
 
-    // 6. DELETE Logic
-    function promptDeleteDist(id) {
-        distToDeleteId = id;
-        toggleModal('deleteDistModal');
-    }
+        if (!res.ok) {
+            throw new Error('Gagal hapus');
+        }
 
-    async function executeDeleteDist() {
-        try {
-            const res = await fetch(`/api/distributions/${distToDeleteId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }});
-            if (res.ok) {
-                toggleModal('deleteDistModal');
-                fetchDistributions(currentPage);
-            }
-        } catch (e) { alert('Error server.'); }
-    }
+        toggleModal('deleteDistModal', false);
 
-    // Inisialisasi awal
-    loadMenusForDropdown().then(() => fetchDistributions(1));
+        fetchDistributions(currentPage);
+
+    } catch (e) {
+        console.error(e);
+        alert('Error server.');
+    }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+(async function init() {
+    await loadMenusForDropdown();
+    await fetchDistributions(1);
+})();
 </script>
 @endsection
