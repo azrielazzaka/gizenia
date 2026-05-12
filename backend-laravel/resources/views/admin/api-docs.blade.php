@@ -17,8 +17,8 @@
             #api-col-sidebar {
                 width: 240px;
                 flex-shrink: 0;
-                background: #16161d;
-                border-right: 1px solid #2a2a35;
+                background: #ffffff ;
+                border-right: 1px solid #DDEEE5;
                 overflow-y: auto;
             }
 
@@ -46,18 +46,18 @@
                 padding: 8px 12px;
                 cursor: pointer;
                 font-size: 12px;
-                color: #aaa;
+                color: #4B5563;
                 transition: background 0.12s;
             }
 
             .col-item:hover {
-                background: #222;
-                color: #eee;
+                background: #EAF7F1;
+                color: #00A86B;
             }
 
             .col-item.selected {
-                background: #1a2a22;
-                color: #22d47a;
+                background: #DDF5EA;;
+                color: #00A86B;
             }
 
             .col-badge {
@@ -93,15 +93,15 @@
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-                background: #0f0f14;
+                background: #F8FAF9;
                 min-width: 0;
             }
 
             /* ===== REQUEST ===== */
             #api-request {
                 padding: 14px 16px;
-                border-bottom: 1px solid #2a2a35;
-                background: #16161d;
+                border-bottom: 1px solid #DDEEE5;
+                background: #ffffff;
             }
 
             .api-row {
@@ -112,9 +112,9 @@
             }
 
             #api-method {
-                background: #1c1c25;
-                border: 1px solid #333;
-                color: #eee;
+                background: #ffffff;
+                border: 1px solid #DDEEE5;
+                color: #1F2937;
                 padding: 8px 10px;
                 border-radius: 6px;
                 font-size: 12px;
@@ -125,9 +125,9 @@
 
             #api-url {
                 flex: 1;
-                background: #1c1c25;
-                border: 1px solid #333;
-                color: #eee;
+                background: #EAF7F1;
+                border: 1px solid #B7E4CF;
+                color: #007A4D;
                 padding: 8px 12px;
                 border-radius: 6px;
                 font-size: 12px;
@@ -135,7 +135,7 @@
             }
 
             #api-send-btn {
-                background: #4d8eff;
+                background: #00A86B;
                 border: none;
                 color: #fff;
                 padding: 8px 20px;
@@ -148,14 +148,14 @@
             }
 
             #api-send-btn:hover {
-                opacity: 0.85;
+                background: #009961;
             }
 
             #api-token {
                 width: 100%;
-                background: #1c1c25;
-                border: 1px solid #333;
-                color: #eee;
+                background: #F4F7F5;
+                border: 1px solid #DDEEE5;
+                color: #1F2937;
                 padding: 8px 12px;
                 border-radius: 6px;
                 font-size: 12px;
@@ -172,9 +172,9 @@
 
             #api-body {
                 width: 100%;
-                background: #1c1c25;
-                border: 1px solid #333;
-                color: #eee;
+                background: #F4F7F5;
+                border: 1px solid #DDEEE5;
+                color: #1F2937;
                 padding: 10px 12px;
                 border-radius: 6px;
                 font-size: 12px;
@@ -188,8 +188,8 @@
             #api-url:focus,
             #api-token:focus,
             #api-body:focus {
-                outline: none;
-                border-color: #4d8eff;
+                border-color: #00A86B;
+    box-shadow: 0 0 0 3px #DDF5EA;
             }
 
             /* ===== RESPONSE ===== */
@@ -226,19 +226,19 @@
                 border-radius: 4px;
                 font-size: 11px;
                 font-weight: 700;
-                background: #1c1c25;
-                color: #555;
+                background: #F4F7F5;
+                color: #374151;
             }
 
             #res-time {
                 font-size: 11px;
-                color: #555;
+                color: #6b7280;
             }
 
             #copy-btn {
-                background: #1c1c25;
-                border: 1px solid #333;
-                color: #888;
+                background: #ffffff;
+                border: 1px solid #DDEEE5;
+                color: #374151;
                 padding: 4px 12px;
                 border-radius: 4px;
                 font-size: 11px;
@@ -247,17 +247,18 @@
             }
 
             #copy-btn:hover {
-                color: #eee;
+                 background: #EAF7F1;
+    color: #00A86B;
             }
 
             #res-body {
-                background: #1c1c25;
-                border: 1px solid #2a2a35;
+                background: #ffffff;
+                border: 1px solid #DDEEE5;
                 border-radius: 8px;
                 padding: 14px;
                 font-family: monospace;
                 font-size: 12px;
-                color: #aaa;
+                color: #374151;
                 white-space: pre-wrap;
                 word-break: break-word;
                 min-height: 120px;
@@ -441,8 +442,8 @@
                 const statusEl = document.getElementById("res-status");
                 bodyEl.textContent = "Response akan tampil di sini setelah klik Send...";
                 statusEl.textContent = "—";
-                statusEl.style.background = "#1c1c25";
-                statusEl.style.color = "#555";
+                statusEl.style.background = "#F4F7F5";
+                statusEl.style.color = "#374151";
                 document.getElementById("res-time").textContent = "";
             }
 

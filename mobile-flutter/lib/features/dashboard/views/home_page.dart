@@ -67,7 +67,7 @@ class HomePage extends StatelessWidget {
                               String foods = (item['foods'] as List).map((f) => f['name']).join(', ');
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildFoodItem(foods, "Porsi Makan Utama", date, "LUNCH"),
+                                child: _buildFoodItem(foods, "Porsi Makan Utama", date, "Makanan Bergizi"),
                               );
                             }).toList(),
                           ),

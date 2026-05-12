@@ -94,30 +94,52 @@ class DashboardController extends GetxController {
     }
   }
 
-  // --- B. CEK NOTIFIKASI MAKANAN DARI ADMIN ---
+  // --- B. CEK NOTIFIKASI DISTRIBUSI MAKANAN ---
   Future<void> checkNotification(String token) async {
-    try {
-      var res = await http.get(
-        Uri.parse("${ApiEndpoints.baseUrlLaravel}/user/notification"),
-        headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
-      );
+  try {
+    var res = await http.get(
+      Uri.parse("${ApiEndpoints.baseUrlLaravel}/user/notification"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Accept": "application/json"
+      },
+    );
 
-      if (res.statusCode == 200) {
-        var data = jsonDecode(res.body);
-        if (data['has_notification'] == true) {
-          hasNotification.value = true;
-          activeDistributionId.value = data['distribution']['_id'] ?? data['distribution']['id'].toString();
-          
-          List foods = data['distribution']['foods'];
-          foodListText.value = foods.map((f) => "${f['name']} (${f['weight']}g)").join(', ');
-        } else {
-          hasNotification.value = false;
-        }
+    print("NOTIF RESPONSE: ${res.body}");
+
+    if (res.statusCode == 200) {
+      var data = jsonDecode(res.body);
+
+      if (data['has_notification'] == true &&
+          data['distribution'] != null) {
+
+        hasNotification.value = true;
+
+        final distribution = data['distribution'];
+
+        // SAFE ID CONVERSION
+        activeDistributionId.value =
+            (distribution['_id'] ?? distribution['id']).toString();
+
+        // SAFE FOOD PARSING
+        List foods = distribution['foods'] ?? [];
+
+        foodListText.value = foods
+            .map((f) => "${f['name']} (${f['weight']}g)")
+            .join(', ');
+
+      } else {
+        hasNotification.value = false;
       }
-    } catch (e) {
-      print("Error Check Notif: $e");
+    } else {
+      hasNotification.value = false;
     }
+
+  } catch (e) {
+    hasNotification.value = false;
+    print("Error Check Notif: $e");
   }
+}
 
   // --- C. JAWAB NOTIFIKASI (TERIMA / TOLAK) ---
   Future<void> submitResponse(String answer) async {
