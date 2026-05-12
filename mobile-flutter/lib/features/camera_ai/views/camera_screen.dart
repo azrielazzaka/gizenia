@@ -1,167 +1,108 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-// Controller Statis Lokal
-class StaticCameraController extends GetxController {
-  var isScanning = false.obs;
-  var aiResult = "".obs;
-
-  void scanFoodDummy() async {
-    isScanning.value = true;
-    aiResult.value = "Menganalisis nutrisi gambar...";
-    
-    // Simulasi proses scanning AI (2 detik)
-    await Future.delayed(const Duration(seconds: 2));
-    
-    aiResult.value = "Deteksi GIZENIA AI: Salad Buah\nKalori: 250 kkal\n(Backend Flask belum aktif)";
-    isScanning.value = false;
-  }
-}
+import 'package:image_picker/image_picker.dart';
+import '../controllers/camera_controller.dart';
 
 class CameraScreen extends StatelessWidget {
-  CameraScreen({super.key});
-  
-  final StaticCameraController controller = Get.put(StaticCameraController());
+  const CameraScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(CameraAIController());
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8F8),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- HEADER CUSTOM ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-                      ),
-                      child: Icon(Icons.arrow_back, color: Colors.green.shade800, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text("Pemindai Nutrisi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green.shade900)),
-                ],
+      appBar: AppBar(title: const Text("GIZENIA Scan Makanan")),
+      body: Column(
+        children: [
+          // Area Tampilan Gambar
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade400),
               ),
+              child: Obx(() => controller.selectedImagePath.isEmpty 
+                ? const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.image_search, size: 80, color: Colors.grey),
+                      Text("Belum ada foto yang dipilih"),
+                    ],
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.file(File(controller.selectedImagePath.value), fit: BoxFit.cover),
+                  )),
             ),
+          ),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          // Hasil AI
+          Obx(() => controller.aiResult.isNotEmpty 
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.green),
+                ),
+                child: Text(controller.aiResult.value, style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.bold)),
+              )
+            : const SizedBox()),
+
+          // Tombol Aksi
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    const SizedBox(height: 20),
-                    
-                    // --- AREA SCANNER ---
-                    Container(
-                      width: double.infinity,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(40),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20)],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.green.shade50),
-                            child: Icon(Icons.document_scanner_rounded, size: 70, color: Colors.green.shade800),
-                          ),
-                          // Corner brackets effect
-                          Positioned(top: 30, left: 30, child: _buildCorner(false, false)),
-                          Positioned(top: 30, right: 30, child: _buildCorner(false, true)),
-                          Positioned(bottom: 30, left: 30, child: _buildCorner(true, false)),
-                          Positioned(bottom: 30, right: 30, child: _buildCorner(true, true)),
-                        ],
+                    // Tombol Kamera
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text("Kamera"),
+                        onPressed: () => controller.pickImage(ImageSource.camera),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700, foregroundColor: Colors.white),
                       ),
                     ),
-                    const SizedBox(height: 40),
-
-                    // --- HASIL ANALISIS ---
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15)],
-                      ),
-                      child: Obx(() => controller.isScanning.value
-                          ? Column(
-                              children: [
-                                CircularProgressIndicator(color: Colors.green.shade800), 
-                                const SizedBox(height: 16), 
-                                Text("AI sedang menganalisis...", style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500))
-                              ]
-                            )
-                          : Column(
-                              children: [
-                                Icon(Icons.analytics_outlined, color: Colors.green.shade800, size: 30),
-                                const SizedBox(height: 12),
-                                Text(
-                                  controller.aiResult.value.isEmpty ? "Arahkan kamera ke makanan Anda untuk memulai pemindaian." : controller.aiResult.value, 
-                                  textAlign: TextAlign.center, 
-                                  style: TextStyle(fontSize: 14, height: 1.5, color: Colors.black87)
-                                ),
-                              ],
-                            )
+                    const SizedBox(width: 10),
+                    // Tombol Galeri (FITUR BARU)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text("Galeri"),
+                        onPressed: () => controller.pickImage(ImageSource.gallery),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade700, foregroundColor: Colors.white),
                       ),
                     ),
-                    const SizedBox(height: 40),
-
-                    // --- TOMBOL BUKA KAMERA ---
-                    ElevatedButton.icon(
-                      onPressed: () => controller.scanFoodDummy(),
-                      icon: const Icon(Icons.camera),
-                      label: const Text("Buka Kamera", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 55), 
-                        backgroundColor: Colors.green.shade800, 
-                        foregroundColor: Colors.white, 
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
-                      ),
-                    )
                   ],
                 ),
-              ),
+                const SizedBox(height: 10),
+                // Tombol Analisis
+                SizedBox(
+                  width: double.infinity,
+                  child: Obx(() => ElevatedButton(
+                    onPressed: controller.isScanning.value ? null : () => controller.scanFood(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade800,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                    child: controller.isScanning.value 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("ANALISIS MAKANAN", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  )),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Helper untuk membuat garis sudut (viewfinder effect)
-  Widget _buildCorner(bool isBottom, bool isRight) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        border: Border(
-          top: isBottom ? BorderSide.none : BorderSide(color: Colors.green.shade200, width: 4),
-          bottom: isBottom ? BorderSide(color: Colors.green.shade200, width: 4) : BorderSide.none,
-          left: isRight ? BorderSide.none : BorderSide(color: Colors.green.shade200, width: 4),
-          right: isRight ? BorderSide(color: Colors.green.shade200, width: 4) : BorderSide.none,
-        ),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(isBottom || isRight ? 0 : 12),
-          topRight: Radius.circular(isBottom || !isRight ? 0 : 12),
-          bottomLeft: Radius.circular(!isBottom || isRight ? 0 : 12),
-          bottomRight: Radius.circular(!isBottom || !isRight ? 0 : 12),
-        ),
+          )
+        ],
       ),
     );
   }

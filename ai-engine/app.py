@@ -6,6 +6,7 @@ from core.ai_model import init_engine
 from routes.recommend import recommend_bp
 from routes.evaluate import evaluate_bp
 from routes.chatbot import chatbot_bp
+from routes.camera_ai import camera_ai_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +18,7 @@ init_engine()
 app.register_blueprint(recommend_bp)
 app.register_blueprint(evaluate_bp)
 app.register_blueprint(chatbot_bp)
+app.register_blueprint(camera_ai_bp)
 
 # Rute Default (Cek Status Server)
 @app.route('/', methods=['GET'])

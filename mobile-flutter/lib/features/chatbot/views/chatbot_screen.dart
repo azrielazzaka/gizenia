@@ -1,154 +1,129 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-// Controller Statis Lokal (Tidak butuh file eksternal)
-class StaticChatbotController extends GetxController {
-  var messages = <Map<String, dynamic>>[
-    {"isUser": false, "text": "Halo! Saya GIZENIA AI. Mode statis sedang aktif, saya siap mendengarkan cerita atau keluhanmu hari ini."}
-  ].obs;
-  var isTyping = false.obs;
-
-  void sendMessage(String text) async {
-    if (text.isEmpty) return;
-    messages.add({"isUser": true, "text": text});
-    isTyping.value = true;
-    
-    // Simulasi delay jaringan (2 detik)
-    await Future.delayed(const Duration(seconds: 2));
-    
-    messages.add({"isUser": false, "text": "Ini adalah balasan otomatis. Saat ini aplikasi belum terhubung ke model NLP Flask, namun UI chat sudah selaras dengan desain baru!"});
-    isTyping.value = false;
-  }
-}
+import '../controllers/chatbot_controller.dart';
 
 class ChatbotScreen extends StatelessWidget {
-  ChatbotScreen({super.key});
-  
-  final StaticChatbotController controller = Get.put(StaticChatbotController());
-  final TextEditingController textController = TextEditingController();
+  const ChatbotScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(ChatbotController());
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F8),
-      body: SafeArea(
-        child: Column(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.green.shade900),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // --- HEADER CUSTOM ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-                      ),
-                      child: Icon(Icons.arrow_back, color: Colors.green.shade800, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Icon(Icons.auto_awesome, color: Colors.yellow.shade700),
+            const SizedBox(width: 8),
+            Text("GIZENIA Chat AI", style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // --- AREA LIST CHAT ---
+          Expanded(
+            child: Obx(() => ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: controller.messages.length,
+              itemBuilder: (context, index) {
+                final msg = controller.messages[index];
+                return _buildChatBubble(msg);
+              },
+            )),
+          ),
+
+          // --- INDIKATOR LOADING AI ---
+          Obx(() => controller.isLoading.value 
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
                     children: [
-                      Text("GIZENIA AI", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green.shade900)),
-                      const Text("Asisten Nutrisi Pintar", style: TextStyle(fontSize: 12, color: Colors.black54)),
+                      const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green)),
+                      const SizedBox(width: 10),
+                      Text("GIZENIA sedang mengetik...", style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                     ],
                   ),
-                  const Spacer(),
-                  CircleAvatar(radius: 18, backgroundColor: Colors.green.shade100, child: Icon(Icons.smart_toy, size: 20, color: Colors.green.shade800)),
-                ],
-              ),
-            ),
+                ),
+              )
+            : const SizedBox()
+          ),
 
-            // --- AREA CHAT ---
-            Expanded(
-              child: Obx(() => ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                itemCount: controller.messages.length,
-                itemBuilder: (context, index) {
-                  var msg = controller.messages[index];
-                  bool isUser = msg['isUser'];
-                  return Align(
-                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                      decoration: BoxDecoration(
-                        color: isUser ? Colors.green.shade800 : Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(20),
-                          topRight: const Radius.circular(20),
-                          bottomLeft: Radius.circular(isUser ? 20 : 0),
-                          bottomRight: Radius.circular(isUser ? 0 : 20),
-                        ),
-                        boxShadow: [
-                          if (!isUser) BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
-                        ],
-                      ),
-                      child: Text(
-                        msg['text'], 
-                        style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 14, height: 1.4),
-                      ),
-                    ),
-                  );
-                },
-              )),
+          // --- AREA KETIK (TEXTFIELD) ---
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
             ),
-
-            // Indikator Mengetik
-            Obx(() => controller.isTyping.value 
-              ? Padding(
-                  padding: const EdgeInsets.only(bottom: 8, left: 24), 
-                  child: Align(alignment: Alignment.centerLeft, child: Text("GIZENIA sedang mengetik...", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade500, fontSize: 12)))
-                )
-              : const SizedBox.shrink()
-            ),
-
-            // --- INPUT AREA ---
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -5))],
-              ),
+            child: SafeArea(
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: textController,
+                      controller: controller.textController,
                       decoration: InputDecoration(
-                        hintText: "Tanya seputar nutrisi...",
+                        hintText: "Tanya soal gizi atau kalori...",
                         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                         filled: true,
-                        fillColor: const Color(0xFFF4F5F4),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
+                      onSubmitted: (_) => controller.sendMessage(),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      controller.sendMessage(textController.text);
-                      textController.clear();
-                    },
-                    child: CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.green.shade800,
-                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.green.shade800,
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      onPressed: () => controller.sendMessage(),
                     ),
-                  )
+                  ),
                 ],
               ),
-            )
-          ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // WIDGET KOTAK PESAN (BUBBLE CHAT)
+  Widget _buildChatBubble(ChatMessage msg) {
+    return Align(
+      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(maxWidth: Get.width * 0.75),
+        decoration: BoxDecoration(
+          color: msg.isUser ? Colors.green.shade800 : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(msg.isUser ? 20 : 0),
+            bottomRight: Radius.circular(msg.isUser ? 0 : 20),
+          ),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
+        ),
+        child: Text(
+          msg.text,
+          style: TextStyle(
+            color: msg.isUser ? Colors.white : Colors.black87, 
+            fontSize: 14, 
+            height: 1.5
+          ),
         ),
       ),
     );
