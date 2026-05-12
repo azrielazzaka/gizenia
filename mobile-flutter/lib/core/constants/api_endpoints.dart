@@ -1,6 +1,6 @@
 class ApiEndpoints {
   // KONEKSI KE LARAVEL BACKEND (Port 8000)
-  static const String baseUrlLaravel = "http://192.168.18.42:8000/api";
+  static const String baseUrlLaravel = "http://192.168.1.14:8000/api";
   
   // ✅ PERBAIKAN: Tambahkan /auth sesuai rute Laravel Anda
   static const String login = "$baseUrlLaravel/auth/login";

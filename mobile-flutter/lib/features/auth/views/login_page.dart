@@ -12,6 +12,8 @@ class LoginPage extends StatelessWidget {
   //Get.put() untuk memasukkan Controller ke memori aplikasi
   final authController = Get.put(AuthController()); 
 
+   final isPasswordHidden = true.obs;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,24 +121,45 @@ class LoginPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: "••••••••",
-                        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                        prefixIcon: Icon(Icons.lock_outline, color: Colors.grey.shade400, size: 20),
-                        suffixIcon: Icon(Icons.visibility_outlined, color: Colors.grey.shade400, size: 20),
-                        filled: true,
-                        fillColor: const Color(0xFFF4F5F4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
+                   Obx(() => TextField(
+  controller: passwordController,
+  obscureText: isPasswordHidden.value,
+  decoration: InputDecoration(
+    hintText: "••••••••",
+    hintStyle: TextStyle(
+      color: Colors.grey.shade500,
+      fontSize: 14,
+    ),
+    prefixIcon: Icon(
+      Icons.lock_outline,
+      color: Colors.grey.shade400,
+      size: 20,
+    ),
+
+    suffixIcon: IconButton(
+      icon: Icon(
+        isPasswordHidden.value
+            ? Icons.visibility_off_outlined
+            : Icons.visibility_outlined,
+        color: Colors.grey.shade400,
+        size: 20,
+      ),
+      onPressed: () {
+        isPasswordHidden.value =
+            !isPasswordHidden.value;
+      },
+    ),
+
+    filled: true,
+    fillColor: const Color(0xFFF4F5F4),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    contentPadding:
+        const EdgeInsets.symmetric(vertical: 16),
+  ),
+)),
                     const SizedBox(height: 32),
 
                     // Tombol Masuk yang Dinamis & Terhubung ke Laravel
