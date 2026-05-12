@@ -14,31 +14,23 @@ class UserDashboardController extends Controller
         $user = auth()->user();
         $today = now()->toDateString();
 
-        
-
         // Cari distribusi hari ini sesuai kelas user
         $distribution = Distribution::where('distribution_date', $today)
-            ->where('target_classes', 'all', [$user->class_room])
+            ->whereIn('target_classes', ['all', $user->class_room])
+            ->latest()
             ->first();
-
-            return response()->json([
-    'today' => $today,
-    'user_class' => $user->class_room,
-    'distribution_found' => $distribution,
-    'responses' => $distribution->responses ?? []
-]);
 
         // Jika tidak ada distribusi
         if (!$distribution) {
             return response()->json([
-                'has_notification' => false,
-                'data' => []
+                'has_notification' => false
             ]);
         }
 
         // Ambil response user sebelumnya
         $responses = $distribution->responses ?? [];
 
+        // Cek apakah user sudah menjawab
         $hasResponded = collect($responses)->contains(function ($response) use ($user) {
             return ($response['user_id'] ?? null) == ($user->_id ?? $user->id);
         });
@@ -46,22 +38,14 @@ class UserDashboardController extends Controller
         // Jika user sudah menjawab
         if ($hasResponded) {
             return response()->json([
-                'has_notification' => false,
-                'data' => []
+                'has_notification' => false
             ]);
         }
 
         // Jika ada notif
         return response()->json([
             'has_notification' => true,
-            'data' => [
-                [
-                    'id' => $distribution->_id ?? $distribution->id,
-                    'title' => 'Distribusi Makanan',
-                    'message' => 'Apakah sudah menerima makanan?',
-                    'created_at' => $distribution->distribution_date
-                ]
-            ]
+            'distribution' => $distribution
         ]);
     }
 
@@ -116,8 +100,8 @@ class UserDashboardController extends Controller
     {
         $user = auth()->user();
 
-        $all = Distribution::where('target_classes', 'all', [$user->class_room])
-            ->orderBy('distribution_date', 'desc')
+        $all = Distribution::whereIn('target_classes', ['all', $user->class_room])
+            ->latest()
             ->get();
 
         // Filter tanggal

@@ -15,6 +15,8 @@ class ProfileController extends GetxController {
   var age = 0.obs;
   var weight = 0.0.obs;
   var height = 0.0.obs;
+  var classRoom = "".obs;
+  var bmi = 0.0.obs;
 
   @override
   void onInit() {
@@ -22,7 +24,7 @@ class ProfileController extends GetxController {
     fetchUserProfile();
   }
 
-  // 1. Ambil Data dari API Laravel
+  // 1. Ambil Data dari API Laravel (/auth/me)
   Future<void> fetchUserProfile() async {
     isLoading.value = true;
     try {
@@ -30,29 +32,34 @@ class ProfileController extends GetxController {
       String token = prefs.getString('jwt_token') ?? '';
 
       var res = await http.get(
-        Uri.parse(ApiEndpoints.getProfile),
+        Uri.parse("${ApiEndpoints.baseUrlLaravel}/auth/me"),
         headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
       );
 
       if (res.statusCode == 200) {
-        var data = jsonDecode(res.body)['user'];
-        name.value = data['name'] ?? 'Alexandra Chen';
-        email.value = data['email'] ?? 'alexandra@mail.com';
-        age.value = data['age'] ?? 26;
-        weight.value = (data['weight'] ?? 58.0).toDouble();
-        height.value = (data['height'] ?? 168.0).toDouble();
+        var data = jsonDecode(res.body);
+        name.value = data['name'] ?? 'User';
+        email.value = data['email'] ?? '-';
+        classRoom.value = data['class_room'] ?? '-';
+        age.value = int.tryParse(data['age'].toString()) ?? 0;
+        weight.value = double.tryParse(data['weight'].toString()) ?? 0.0;
+        height.value = double.tryParse(data['height'].toString()) ?? 0.0;
+        
+        _calculateBmi();
       } else if (res.statusCode == 401) {
         logout();
       }
     } catch (e) {
-      // Data dummy jika server Laravel belum menyala
-      name.value = "Alexandra Chen";
-      email.value = "alexandra.chen@healthmail.com";
-      age.value = 26;
-      weight.value = 58.0;
-      height.value = 168.0;
+      Get.snackbar("Error Koneksi", "Gagal memuat profil dari server.");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  void _calculateBmi() {
+    if (height.value > 0 && weight.value > 0) {
+      double hMeter = height.value / 100;
+      bmi.value = weight.value / (hMeter * hMeter);
     }
   }
 
@@ -71,13 +78,14 @@ class ProfileController extends GetxController {
         }),
       );
 
-      // Kita anggap sukses untuk simulasi jika tidak 500
+      // Jika berhasil di-update di server
       if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 404) { 
         name.value = newName;
         email.value = newEmail;
         age.value = newAge;
         weight.value = newWeight;
         height.value = newHeight;
+        _calculateBmi();
         
         Get.back(); // Tutup halaman edit
         Get.snackbar("Berhasil", "Profil diperbarui!", backgroundColor: Colors.green.shade100, colorText: Colors.green.shade900);

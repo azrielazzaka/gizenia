@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -6,12 +7,14 @@ import '../../../../core/constants/api_endpoints.dart';
 
 class HistoryController extends GetxController {
   var isLoading = true.obs;
-  var totalCaloriesConsumed = 0.obs;
-  var targetCalories = 2000.obs;
   
-  // List riwayat dinamis
-  var breakfastList = [].obs;
-  var lunchList = [].obs;
+  // Data Riwayat dari Laravel
+  var historyList = [].obs;
+  var totalRecords = 0.obs;
+
+  // Filter & Search
+  var searchQuery = "".obs;
+  var selectedDate = "".obs;
 
   @override
   void onInit() {
@@ -19,37 +22,54 @@ class HistoryController extends GetxController {
     fetchHistory();
   }
 
+  // Mengambil data dari Endpoint Laravel
   Future<void> fetchHistory() async {
     isLoading.value = true;
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String token = prefs.getString('jwt_token') ?? '';
 
+      // Endpoint disertai query pencarian dan tanggal seperti di Web
+      String url = "${ApiEndpoints.getHistory}?page=1&search=${searchQuery.value}&date=${selectedDate.value}";
+
       var res = await http.get(
-        Uri.parse(ApiEndpoints.getHistory),
+        Uri.parse(url),
         headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
       );
 
       if (res.statusCode == 200) {
         var data = jsonDecode(res.body);
-        totalCaloriesConsumed.value = data['summary']['total_calories'];
         
-        // Asumsi backend memisahkan history berdasarkan kategori (Sarapan, Makan Siang)
-        breakfastList.value = data['history_breakfast'] ?? [];
-        lunchList.value = data['history_lunch'] ?? [];
+        // Asumsi data Laravel dibungkus dalam pagination 'data'
+        if (data['data'] != null) {
+          historyList.value = data['data'];
+          totalRecords.value = data['total'] ?? 0;
+        }
       }
     } catch (e) {
-      // Dummy data jika backend offline
-      totalCaloriesConsumed.value = 1450;
-      breakfastList.value = [
-        {"name": "Roti Gandum & Telur", "cal": "250 kcal", "time": "07:30 AM"},
-        {"name": "Susu Almond", "cal": "130 kcal", "time": "07:45 AM"},
-      ];
-      lunchList.value = [
-        {"name": "Salad Quinoa Mediterania", "cal": "420 kcal", "time": "12:30 PM"},
-      ];
+      print("Error Fetch History: $e");
+      Get.snackbar("Error", "Gagal memuat riwayat distribusi.", backgroundColor: Colors.red.shade100);
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // Fungsi untuk fitur pencarian
+  void searchHistory(String query) {
+    searchQuery.value = query;
+    fetchHistory();
+  }
+
+  // Fungsi untuk filter tanggal
+  void filterByDate(String date) {
+    selectedDate.value = date;
+    fetchHistory();
+  }
+  
+  // Fungsi Reset
+  void clearFilter() {
+    searchQuery.value = "";
+    selectedDate.value = "";
+    fetchHistory();
   }
 }

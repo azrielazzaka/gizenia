@@ -1,148 +1,209 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/history_controller.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(HistoryController());
+    final searchController = TextEditingController();
+
     return Scaffold(
-      backgroundColor: Color(0xFFF7F8F8),
+      backgroundColor: const Color(0xFFF4F6F4),
       appBar: AppBar(
-        title: Text("Riwayat Nutrisi", style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text("Riwayat Distribusi", style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Kalender Strip
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
+      body: Column(
+        children: [
+          // 1. AREA PENCARIAN & FILTER
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    _buildDateItem("Sen", "12", false),
-                    _buildDateItem("Sel", "13", false),
-                    _buildDateItem("Rab", "14", true), // Hari ini (Aktif)
-                    _buildDateItem("Kam", "15", false),
-                    _buildDateItem("Jum", "16", false),
+                    // Field Search
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: searchController,
+                        onSubmitted: (val) => controller.searchHistory(val),
+                        decoration: InputDecoration(
+                          hintText: "Cari makanan...",
+                          hintStyle: const TextStyle(fontSize: 13),
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Tombol Pilih Tanggal
+                    Expanded(
+                      flex: 1,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          DateTime? picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime.now());
+                          if (picked != null) {
+                            String formattedDate = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                            controller.filterByDate(formattedDate);
+                          }
+                        },
+                        icon: const Icon(Icons.calendar_today, size: 16),
+                        label: const Text("Tgl", style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade50,
+                          foregroundColor: Colors.green.shade800,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    )
                   ],
                 ),
-              ),
+                Obx(() {
+                  if (controller.selectedDate.value.isNotEmpty || controller.searchQuery.value.isNotEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Filter Aktif", style: TextStyle(fontSize: 12, color: Colors.green.shade700, fontWeight: FontWeight.bold)),
+                          GestureDetector(onTap: () { searchController.clear(); controller.clearFilter(); }, child: const Text("Reset", style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.bold))),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                })
+              ],
             ),
-            
-            Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Summary Card
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade800,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [BoxShadow(color: Colors.green.shade200, blurRadius: 15, offset: Offset(0, 8))],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Total Konsumsi", style: TextStyle(color: Colors.green.shade200, fontSize: 12)),
-                            SizedBox(height: 8),
-                            Text("1,450 kcal", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                          child: Text("Target: 2,000", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                        )
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  
-                  // Meal Sections
-                  _buildMealSection("Sarapan", "380 kcal", [
-                    _buildHistoryItem("Roti Gandum & Telur", "250 kcal", "07:30 AM"),
-                    _buildHistoryItem("Susu Almond", "130 kcal", "07:45 AM"),
-                  ]),
-                  SizedBox(height: 20),
-                  _buildMealSection("Makan Siang", "620 kcal", [
-                    _buildHistoryItem("Salad Quinoa Mediterania", "420 kcal", "12:30 PM"),
-                    _buildHistoryItem("Dada Ayam Panggang", "200 kcal", "12:45 PM"),
-                  ]),
-                  
-                  SizedBox(height: 80),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+          
+          // 2. LIST RIWAYAT DARI LARAVEL
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-  Widget _buildDateItem(String day, String date, bool isActive) {
-    return Container(
-      margin: EdgeInsets.only(right: 16),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: isActive ? Colors.green.shade800 : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: isActive ? null : Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Text(day, style: TextStyle(color: isActive ? Colors.white70 : Colors.grey.shade500, fontSize: 12)),
-          SizedBox(height: 8),
-          Text(date, style: TextStyle(color: isActive ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+              if (controller.historyList.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history, size: 60, color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      Text("Belum ada riwayat distribusi.", style: TextStyle(color: Colors.grey.shade500)),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: controller.fetchHistory,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: controller.historyList.length,
+                  itemBuilder: (context, index) {
+                    var dist = controller.historyList[index];
+                    return _buildHistoryCard(dist);
+                  },
+                ),
+              );
+            }),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildMealSection(String title, String totalCal, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Text(totalCal, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green.shade800)),
-          ],
-        ),
-        SizedBox(height: 12),
-        ...items,
-      ],
-    );
-  }
+  // WIDGET KARTU RIWAYAT
+  Widget _buildHistoryCard(dynamic dist) {
+    // 1. Parsing Makanan
+    List foods = dist['foods'] ?? [];
+    String foodText = foods.map((f) => "${f['name']} (${f['weight']}g)").join(', ');
 
-  Widget _buildHistoryItem(String name, String cal, String time) {
+    // 2. Parsing Status & Waktu dari array Responses
+    String statusText = "BELUM DIJAWAB";
+    Color statusColor = Colors.orange.shade700;
+    Color statusBg = Colors.orange.shade50;
+    String timeText = "-";
+
+    List responses = dist['responses'] ?? [];
+    if (responses.isNotEmpty) {
+      // Ambil respon dari user ini (karena backend hanya melempar milik user yg login)
+      var res = responses[0];
+      if (res['answer'] == 'Ya') {
+        statusText = "DITERIMA";
+        statusColor = Colors.green.shade700;
+        statusBg = Colors.green.shade50;
+      } else {
+        statusText = "DITOLAK";
+        statusColor = Colors.grey.shade600;
+        statusBg = Colors.grey.shade200;
+      }
+
+      // Parsing Waktu ISO (Contoh: 2026-05-07T12:30:00Z)
+      if (res['responded_at'] != null) {
+        try {
+          DateTime dt = DateTime.parse(res['responded_at']).toLocal();
+          timeText = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} WIB";
+        } catch (e) {
+          timeText = "Waktu Error";
+        }
+      }
+    }
+
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              SizedBox(height: 4),
-              Text(time, style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+              Text(dist['distribution_date'] ?? 'Tanggal Tidak Diketahui', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text(timeText, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
             ],
           ),
-          Text(cal, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 13)),
+          const SizedBox(height: 12),
+          const Text("Menu Didistribusikan:", style: TextStyle(fontSize: 10, color: Colors.grey)),
+          const SizedBox(height: 4),
+          Text(foodText, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, height: 1.4)),
+          const SizedBox(height: 16),
+          
+          // Badge Status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: statusColor.withValues(alpha: 0.2))),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  statusText == "DITERIMA" ? Icons.check_circle : (statusText == "DITOLAK" ? Icons.cancel : Icons.help),
+                  size: 14, color: statusColor,
+                ),
+                const SizedBox(width: 6),
+                Text(statusText, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor, letterSpacing: 0.5)),
+              ],
+            ),
+          )
         ],
       ),
     );

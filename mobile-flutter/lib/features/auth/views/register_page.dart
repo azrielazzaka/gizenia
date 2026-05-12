@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
-import '../controllers/auth_controller.dart'; // ✅ IMPORT CONTROLLER
+import '../controllers/auth_controller.dart'; 
 
 class RegisterPage extends StatelessWidget {
   RegisterPage({super.key});
@@ -18,7 +18,7 @@ class RegisterPage extends StatelessWidget {
   // State lokal untuk UI statis menggunakan Rx (GetX)
   final isObscure = true.obs;
   final isConfirmObscure = true.obs;
-  final isChecked = false.obs;
+  
   final selectedKelas = '1'.obs; // Default kelas 1
 
   final authController = Get.put(AuthController());
@@ -107,47 +107,10 @@ class RegisterPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // 6. Checkbox Syarat & Ketentuan
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(() => SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Checkbox(
-                      value: isChecked.value,
-                      onChanged: (val) => isChecked.value = val ?? false,
-                      activeColor: Colors.green.shade800,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                    ),
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade800, height: 1.5),
-                        children: [
-                          const TextSpan(text: "Saya setuju dengan "),
-                          TextSpan(text: "Syarat & Ketentuan", style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold)),
-                          const TextSpan(text: " dan "),
-                          TextSpan(text: "Kebijakan Privasi", style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold)),
-                          const TextSpan(text: " dari GIZENIA."),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // 7. ✅ TOMBOL DAFTAR (TERHUBUNG KE LARAVEL)
               Obx(() => ElevatedButton(
-                onPressed: authController.isLoading.value ? null : () {
-                  if (!isChecked.value) {
-                    Get.snackbar("Perhatian", "Anda harus menyetujui Syarat & Ketentuan.", backgroundColor: Colors.orange.shade100);
-                    return;
-                  }
-                  
+  onPressed: authController.isLoading.value
+      ? null
+      : () {
                   // Memanggil fungsi register dari AuthController
                   authController.register({
                     "name": nameController.text,
@@ -156,6 +119,7 @@ class RegisterPage extends StatelessWidget {
                     "age": int.tryParse(ageController.text) ?? 0,
                     "weight": double.tryParse(weightController.text) ?? 0.0,
                     "height": double.tryParse(heightController.text) ?? 0.0,
+                    "class_room": "Kelas ${selectedKelas.value}",
                   });
                 },
                 style: ElevatedButton.styleFrom(
