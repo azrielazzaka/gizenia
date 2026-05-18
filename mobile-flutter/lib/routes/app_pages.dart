@@ -7,6 +7,8 @@ import '../features/auth/views/register_page.dart';
 import '../features/dashboard/views/main_navigation.dart';
 import '../features/chatbot/views/chatbot_screen.dart';
 import '../features/camera_ai/views/camera_screen.dart';
+import '../features/auth/views/forgot_password_page.dart';
+import '../features/auth/views/reset_password_page.dart';
 
 class AppPages {
   // initialRoute menentukan halaman mana yang pertama kali muncul
@@ -35,6 +37,14 @@ class AppPages {
     GetPage(
       name: Routes.CAMERA_AI,
       page: () => CameraScreen(),
+    ),
+    GetPage(
+      name: Routes.FORGOT_PASSWORD,
+      page: () => ForgotPasswordPage(),
+    ),
+    GetPage(
+      name: Routes.RESET_PASSWORD,
+      page: () => ResetPasswordPage(),
     ),
   ];
 }
