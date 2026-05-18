@@ -7,6 +7,7 @@ import '../../../../routes/app_routes.dart';
 
 class DashboardController extends GetxController {
   // 1. STATE MANAGEMENT (Observables / .obs)
+  var allMenus = [].obs;
   var isLoading = true.obs;
   
   // Data Profil Utama
@@ -50,6 +51,7 @@ class DashboardController extends GetxController {
     }
 
     // Jalankan permintaan data ke Laravel
+    await fetchMenusDatabase(token);
     await fetchProfile(token);
     await checkNotification(token);
     await fetchHistory(token);
@@ -170,6 +172,22 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<void> fetchMenusDatabase(String token) async {
+    try {
+      var res = await http.get(
+        Uri.parse("${ApiEndpoints.baseUrlLaravel}/menus"),
+        headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+      );
+      if (res.statusCode == 200) {
+        var data = jsonDecode(res.body);
+        // Sesuaikan mapping data seperti di web
+        allMenus.value = data['all_menus']?['data'] ?? data['data'] ?? data ?? [];
+      }
+    } catch (e) {
+      print("Error Fetch Menus: $e");
+    }
+  }
+
   // --- D. AMBIL RIWAYAT MAKANAN ---
   Future<void> fetchHistory(String token) async {
     try {
@@ -181,9 +199,72 @@ class DashboardController extends GetxController {
       if (res.statusCode == 200) {
         var data = jsonDecode(res.body);
         if (data['data'] != null) {
-          var histories = data['data'] as List;
-          // Ambil 3 data teratas saja untuk ditampilkan di Home
+          List histories = data['data'];
           recentHistory.value = histories.take(3).toList();
+
+          // LOGIKA PERHITUNGAN PERSIS VERSI WEB
+          double totalCals = 0;
+          double totalPro = 0;
+          double totalCarbs = 0;
+          double totalFats = 0;
+
+          String today = DateTime.now().toIso8601String().split('T')[0];
+
+          for (var dist in histories) {
+            // 1. Filter Tanggal Hari Ini
+            if (dist['distribution_date'] == today) {
+              // 2. Cek apakah user menjawab "Ya"
+              var responses = dist['responses'] as List? ?? [];
+              bool isAccepted = responses.any((r) => r['answer'] == 'Ya');
+
+              if (isAccepted) {
+                List foods = dist['foods'] ?? [];
+                for (var f in foods) {
+                  // 3. Cari detail nutrisi di database menu
+                  var menuId = f['menu_id']?.toString();
+                  var menuData = allMenus.firstWhere(
+                    (m) => m['id']?.toString() == menuId || m['_id']?.toString() == menuId,
+                    orElse: () => null,
+                  );
+
+                  print("--- DEBUG DATA MENU ---");
+    print("Nama Makanan di History: ${f['name']}");
+    if (menuData != null) {
+      print("Data Menu Ditemukan: ${menuData['name']}");
+      print("Isi Raw menuData: $menuData"); // Ini akan menampilkan semua key (fat, fats, atau lemak)
+    } else {
+      print("Data Menu TIDAK DITEMUKAN untuk ID: $menuId");
+    }
+    print("-----------------------");
+
+                 if (menuData != null) {
+  double foodWeight = double.tryParse(f['weight'].toString()) ?? 100;
+  double servingSize = double.tryParse((menuData['serving_size_g'] ?? menuData['serving_size'] ?? 100).toString()) ?? 100;
+  double ratio = foodWeight / servingSize;
+
+  // Kalori
+  totalCals += (double.tryParse((menuData['calories'] ?? menuData['kalori'] ?? 0).toString()) ?? 0) * ratio;
+  
+  // Protein
+  totalPro += (double.tryParse((menuData['protein'] ?? 0).toString()) ?? 0) * ratio;
+  
+  // Karbohidrat (di log tertulis 'carbohydrates')
+  totalCarbs += (double.tryParse((menuData['carbohydrates'] ?? menuData['carbs'] ?? menuData['karbohidrat'] ?? 0).toString()) ?? 0) * ratio;
+  
+  // Lemak (DI LOG ANDA TERTULIS 'fat')
+  // Kita tambahkan pengecekan 'fat' di sini agar terbaca
+  totalFats += (double.tryParse((menuData['fat'] ?? menuData['fats'] ?? menuData['lemak'] ?? 0).toString()) ?? 0) * ratio;
+}
+                }
+              }
+            }
+          }
+
+          // Update UI
+          consumedCalories.value = totalCals;
+          consumedProtein.value = totalPro;
+          consumedCarbs.value = totalCarbs;
+          consumedFats.value = totalFats;
         }
       }
     } catch (e) {

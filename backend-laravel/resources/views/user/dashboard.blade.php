@@ -186,11 +186,29 @@
 
         // 0. Tarik Database Nutrisi
         async function loadMenusDatabase() {
-            try {
-                const res = await fetch('/api/menus', { headers: { 'Authorization': `Bearer ${token}` } });
-                allMenusData = await res.json();
-            } catch (e) { }
-        }
+    try {
+
+        const res = await fetch('/api/menus', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+
+        console.log("MENU RESPONSE :", data);
+
+        // FIX
+        allMenusData = data.all_menus?.data || data.data || data || [];
+
+        console.log("ALL MENUS FIX :", allMenusData);
+
+    } catch (e) {
+
+        console.log("ERROR MENU :", e);
+
+    }
+}
 
         // 1. Ambil Profil & Hitung Target (BMR, TDEE, BMI)
         async function loadProfile() {
@@ -280,51 +298,121 @@
                     document.getElementById('notificationCard').classList.add('hidden');
                     document.getElementById('notificationCard').classList.remove('flex');
 
-                    if (answer === 'Ya') {
-                        let totalCals = 0, totalPro = 0;
-                        activeDistributionData.foods.forEach(f => {
-                            const menuData = allMenusData.find(m => (m._id === f.menu_id || m.id === f.menu_id));
-                            if (menuData) {
-                                const ratio = parseFloat(f.weight) / parseFloat(menuData.serving_size_g || 100);
-                                totalCals += parseFloat(menuData.calories || 0) * ratio;
-                                totalPro += parseFloat(menuData.protein || 0) * ratio;
-                            }
-                        });
+                   if (answer === 'Ya') {
 
-                        // Tentukan Keputusan AI (Seimbang / Kurang / Lebih)
-                        const box = document.getElementById('balanceStatus');
-                        const iconBox = document.getElementById('modalIconBox');
-                        const icon = document.getElementById('modalIcon');
+    let totalCals = 0;
+    let totalPro = 0;
 
-                        const lowerBound = userTargetMealCalories * 0.8;
-                        const upperBound = userTargetMealCalories * 1.2;
+    activeDistributionData.foods.forEach(f => {
 
-                        if (totalCals < lowerBound) {
-                            box.className = "flex items-center p-4 bg-yellow-50 text-yellow-700 rounded-xl text-sm font-semibold mb-6 border border-yellow-200 leading-snug";
-                            box.innerHTML = '<i class="fas fa-exclamation-circle text-2xl mr-3"></i> Menu ini <b>KURANG</b> dari kebutuhan kalori Anda. Anda mungkin merasa cepat lapar.';
-                            iconBox.className = "w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4";
-                            icon.className = "fas fa-battery-quarter text-yellow-500 text-2xl";
-                        } else if (totalCals > upperBound) {
-                            box.className = "flex items-center p-4 bg-red-50 text-red-700 rounded-xl text-sm font-semibold mb-6 border border-red-200 leading-snug";
-                            box.innerHTML = '<i class="fas fa-fire text-2xl mr-3"></i> Menu ini <b>BERLEBIHAN</b>. Kalorinya melebihi kapasitas standar makan utama Anda.';
-                            iconBox.className = "w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4";
-                            icon.className = "fas fa-chart-line text-red-500 text-2xl";
-                        } else {
-                            box.className = "flex items-center p-4 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-semibold mb-6 border border-emerald-200 leading-snug";
-                            box.innerHTML = '<i class="fas fa-check-circle text-2xl mr-3"></i> Sangat <b>SEIMBANG!</b> Menu ini pas untuk pertumbuhan optimal Anda.';
-                            iconBox.className = "w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4";
-                            icon.className = "fas fa-robot text-emerald-500 text-2xl";
-                        }
+        console.log("FOOD :", f);
 
-                        document.getElementById('calcCalories').innerHTML = `${Math.round(totalCals)} <span class="text-xs text-gray-500">kkal</span>`;
-                        document.getElementById('calcTarget').innerHTML = `${Math.round(userTargetMealCalories)} <span class="text-xs text-gray-500">kkal</span>`;
+        const menuData = allMenusData.find(m =>
+            String(m._id || m.id) === String(
+                f.menu_id || f.menu?._id || f.menu?.id
+            )
+        );
 
-                        toggleModal('nutritionCheckModal');
-                        updateDashboardCards(totalCals, totalPro);
+        console.log("MENU FOUND :", menuData);
 
-                    } else {
-                        alert('Laporan dicatat. Pastikan Anda mendapat hak makan gizi Anda ya!');
-                    }
+        if (menuData) {
+
+            console.log("FULL MENU DATA :", menuData);
+
+            const foodWeight = parseFloat(f.weight || 100);
+
+            const servingSize = parseFloat(
+                menuData.serving_size_g ||
+                menuData.serving_size ||
+                100
+            );
+
+            const ratio = foodWeight / servingSize;
+
+            const calories = parseFloat(
+                menuData.calories ||
+                menuData.kalori ||
+                menuData.energy ||
+                menuData.kalori_total ||
+                0
+            );
+
+            const protein = parseFloat(
+                menuData.protein ||
+                menuData.protein_g ||
+                menuData.protein_total ||
+                0
+            );
+
+            totalCals += calories * ratio;
+            totalPro += protein * ratio;
+        }
+    });
+
+    console.log("TOTAL CAL :", totalCals);
+    console.log("TOTAL PRO :", totalPro);
+
+    // Tentukan Keputusan AI
+    const box = document.getElementById('balanceStatus');
+    const iconBox = document.getElementById('modalIconBox');
+    const icon = document.getElementById('modalIcon');
+
+    const lowerBound = userTargetMealCalories * 0.8;
+    const upperBound = userTargetMealCalories * 1.2;
+
+    if (totalCals < lowerBound) {
+
+        box.className =
+            "flex items-center p-4 bg-yellow-50 text-yellow-700 rounded-xl text-sm font-semibold mb-6 border border-yellow-200 leading-snug";
+
+        box.innerHTML =
+            '<i class="fas fa-exclamation-circle text-2xl mr-3"></i> Menu ini <b>KURANG</b> dari kebutuhan kalori Anda. Anda mungkin merasa cepat lapar.';
+
+        iconBox.className =
+            "w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4";
+
+        icon.className =
+            "fas fa-battery-quarter text-yellow-500 text-2xl";
+
+    } else if (totalCals > upperBound) {
+
+        box.className =
+            "flex items-center p-4 bg-red-50 text-red-700 rounded-xl text-sm font-semibold mb-6 border border-red-200 leading-snug";
+
+        box.innerHTML =
+            '<i class="fas fa-fire text-2xl mr-3"></i> Menu ini <b>BERLEBIHAN</b>. Kalorinya melebihi kapasitas standar makan utama Anda.';
+
+        iconBox.className =
+            "w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4";
+
+        icon.className =
+            "fas fa-chart-line text-red-500 text-2xl";
+
+    } else {
+
+        box.className =
+            "flex items-center p-4 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-semibold mb-6 border border-emerald-200 leading-snug";
+
+        box.innerHTML =
+            '<i class="fas fa-check-circle text-2xl mr-3"></i> Sangat <b>SEIMBANG!</b> Menu ini pas untuk pertumbuhan optimal Anda.';
+
+        iconBox.className =
+            "w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4";
+
+        icon.className =
+            "fas fa-robot text-emerald-500 text-2xl";
+    }
+
+    document.getElementById('calcCalories').innerHTML =
+        `${Math.round(totalCals)} <span class="text-xs text-gray-500">kkal</span>`;
+
+    document.getElementById('calcTarget').innerHTML =
+        `${Math.round(userTargetMealCalories)} <span class="text-xs text-gray-500">kkal</span>`;
+
+    toggleModal('nutritionCheckModal');
+
+    updateDashboardCards(totalCals, totalPro);
+}
                     loadHistory();
                 }
             } catch (e) { }
@@ -404,8 +492,66 @@
             } catch (e) { }
         }
 
-        loadMenusDatabase();
-        loadProfile();
-        checkNotification();
+        async function loadTodayNutrition() {
+    try {
+        const res = await fetch(`/api/user/history?page=1`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!data.data || data.data.length === 0) return;
+
+        let totalCals = 0;
+        let totalPro = 0;
+
+        // Ambil tanggal hari ini dalam format YYYY-MM-DD (sesuaikan dengan format API Anda)
+        const today = new Date().toISOString().split('T')[0];
+
+        data.data.forEach(dist => {
+            // FILTER: Hanya hitung jika tanggal distribusi adalah HARI INI
+            // Asumsi dist.distribution_date formatnya adalah "YYYY-MM-DD"
+            if (dist.distribution_date === today) {
+                
+                const accepted = dist.responses?.find(r =>
+                    r.user_id === currentUserId &&
+                    r.answer === 'Ya'
+                );
+
+                if (accepted) {
+                    dist.foods.forEach(f => {
+                        const menuData = allMenusData.find(m =>
+                            String(m._id || m.id) === String(f.menu_id || f.menu?._id || f.menu?.id)
+                        );
+
+                        if (menuData) {
+                            const foodWeight = parseFloat(f.weight || 100);
+                            const servingSize = parseFloat(menuData.serving_size_g || menuData.serving_size || 100);
+                            const ratio = foodWeight / servingSize;
+
+                            const calories = parseFloat(menuData.calories || menuData.kalori || menuData.kalori_total || 0);
+                            const protein = parseFloat(menuData.protein || menuData.protein_g || 0);
+
+                            totalCals += calories * ratio;
+                            totalPro += protein * ratio;
+                        }
+                    });
+                }
+            }
+        });
+
+        // Jika tidak ada data hari ini, totalCals akan tetap 0 (Otomatis Reset)
+        updateDashboardCards(totalCals, totalPro);
+
+    } catch (e) {
+        console.log("Error loading today's nutrition:", e);
+    }
+}
+(async () => {
+
+    await loadMenusDatabase();
+    await loadProfile();
+    await loadTodayNutrition();
+    await checkNotification();
+
+})();
     </script>
 @endsection
