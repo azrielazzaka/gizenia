@@ -366,27 +366,107 @@ class CalorieCheckerPage extends StatelessWidget {
   }
 
   Widget _buildMenuCard(dynamic menu, bool isRecommended) {
+    double matchScore = (menu['match_score'] ?? 0).toDouble();
     String imgUrl = menu['image'] ?? menu['image_url'] ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061';
+
     return Container(
-      width: 220, margin: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: isRecommended ? Border.all(color: Colors.green.shade200) : null),
+      width: 220, 
+      margin: const EdgeInsets.only(right: 16, bottom: 8, left: 4, top: 4),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(24), 
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+        border: isRecommended ? Border.all(color: Colors.green.shade100, width: 2) : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)), child: Image.network(imgUrl, height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey.shade300))),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)), 
+                child: Image.network(
+                  imgUrl, 
+                  height: 130, 
+                  width: double.infinity, 
+                  fit: BoxFit.cover, 
+                  errorBuilder: (c, e, s) => Container(height: 130, color: Colors.grey.shade200, child: const Icon(Icons.fastfood, color: Colors.grey))
+                ),
+              ),
+              if (isRecommended && matchScore > 0)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.shade100, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle, size: 12, color: Colors.green.shade600),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${matchScore.toStringAsFixed(1)}%",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.green.shade800),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(menu['name'] ?? '-', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text(
+                  menu['name'] ?? '-', 
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), 
+                  maxLines: 1, 
+                  overflow: TextOverflow.ellipsis
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  (menu['category'] ?? 'UMUM').toString().toUpperCase(),
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.green.shade600, letterSpacing: 0.5),
+                ),
                 const SizedBox(height: 12),
-                Text("${menu['calories']} kkal | Pro: ${menu['protein']}g", style: TextStyle(fontSize: 12, color: Colors.green.shade800, fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildNutrientInfo("KALORI", "${menu['calories']}"),
+                    Container(width: 1, height: 15, color: Colors.grey.shade200),
+                    _buildNutrientInfo("PROTEIN", "${menu['protein'] ?? 0}g"),
+                    Container(width: 1, height: 15, color: Colors.grey.shade200),
+                    _buildNutrientInfo("LEMAK", "${menu['fat'] ?? 0}g"),
+                  ],
+                ),
               ],
             ),
           )
         ],
       ),
+    );
+  }
+
+  // Tambahkan fungsi pembantu ini tepat di bawah _buildMenuCard
+  Widget _buildNutrientInfo(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.bold)),
+        Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87)),
+      ],
     );
   }
 

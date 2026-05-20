@@ -32,7 +32,7 @@ def init_engine():
                 df[col] = pd.to_numeric(df.get(col, 0), errors='coerce').fillna(0)
 
             features = df[['calories', 'protein', 'fat', 'carbohydrates']]
-            knn_model = NearestNeighbors(n_neighbors=6, algorithm='auto')
+            knn_model = NearestNeighbors(n_neighbors=3, algorithm='auto')
             knn_model.fit(features)
             print(f"✅ Model KNN Siap.")
         else:

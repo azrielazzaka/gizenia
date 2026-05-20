@@ -78,6 +78,71 @@
         </button>
     </div>
 
+    function createMenuCard(menu, isRecommended = false) {
+    // 1. Ambil URL gambar
+    const imgUrl = menu.image || menu.image_url || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+    
+    // 2. Deklarasi string kosong untuk badge
+    let badge = '';
+    
+    // 3. Desain badge akurasi (Estetik & Presisi)
+    if (isRecommended) {
+        const akurasi = menu.match_score || menu.tingkat_akurasi || 0; 
+        
+        badge = `
+        <div class="absolute top-3 left-3 z-20">
+            <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md text-emerald-700 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm border border-emerald-100 uppercase tracking-wide">
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Cocok ${akurasi}%
+            </span>
+        </div>`;
+    }
+    
+    // 4. Pengaturan border kartu (Lebih menonjol jika direkomendasikan)
+    const borderClass = isRecommended 
+        ? 'border-emerald-300 shadow-emerald-100 ring-4 ring-emerald-50' 
+        : 'border-gray-100 shadow-sm';
+
+    // 5. Kembalikan HTML
+    return `
+    <div class="bg-white rounded-2xl border ${borderClass} overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group relative">
+        <div class="relative h-44 bg-gray-100 overflow-hidden">
+            ${badge}
+            <img src="${imgUrl}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            
+            <h3 class="absolute bottom-4 left-4 right-4 text-white font-bold text-lg leading-tight truncate shadow-sm">${menu.name}</h3>
+        </div>
+        
+        <div class="p-5 flex-1 flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md uppercase tracking-wider">${menu.category || 'UMUM'}</span>
+                <span class="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">${menu.serving_size_g || 100}g / Porsi</span>
+            </div>
+            
+            <div class="flex justify-between text-center items-center mt-auto">
+                <div class="flex-1">
+                    <p class="text-[10px] text-gray-400 font-medium mb-1 uppercase tracking-wider">Kalori</p>
+                    <p class="font-bold text-emerald-600 text-sm">${menu.calories}</p>
+                </div>
+                <div class="w-px h-8 bg-gray-200"></div>
+                <div class="flex-1">
+                    <p class="text-[10px] text-gray-400 font-medium mb-1 uppercase tracking-wider">Protein</p>
+                    <p class="font-bold text-gray-800 text-sm">${menu.protein}g</p>
+                </div>
+                <div class="w-px h-8 bg-gray-200"></div>
+                <div class="flex-1">
+                    <p class="text-[10px] text-gray-400 font-medium mb-1 uppercase tracking-wider">Lemak</p>
+                    <p class="font-bold text-gray-800 text-sm">${menu.fat || 0}g</p>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
     <div id="allMenuGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-6">
         <div class="col-span-full py-6 text-center text-gray-400">Memuat katalog menu...</div>
     </div>

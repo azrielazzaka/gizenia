@@ -35,7 +35,7 @@ def get_recommendation():
                 "protein": float(menu['protein']),
                 "fat": float(menu['fat']),
                 "carbohydrates": float(menu['carbohydrates']),
-                "image": str(menu.get('image', '')),
+                "image": str(menu.get('image_url', '')),
                 "serving_size_g": float(menu['serving_size_g']),
                 "match_score": match_score
             })
