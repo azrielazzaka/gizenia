@@ -64,6 +64,7 @@ Route::middleware(['auth:api', 'role:user'])->prefix('user')->group(function () 
     Route::get('notification', [UserDashboardController::class, 'checkNotification']);
     Route::post('distributions/{id}/respond', [UserDashboardController::class, 'submitResponse']);
     Route::get('history', [UserDashboardController::class, 'history']);
-    Route::get('menus', [UserMenuController::class, 'index']);
 
 });
+
+Route::get('user/menus', [UserMenuController::class, 'index']);

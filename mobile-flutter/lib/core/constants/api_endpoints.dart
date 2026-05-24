@@ -1,6 +1,6 @@
 class ApiEndpoints {
   // KONEKSI KE LARAVEL BACKEND (Port 8000)
-  static const String baseUrlLaravel = "http://10.106.143.18:8000/api";
+  static const String baseUrlLaravel = "http://192.168.1.14:8000/api";
   
   // ✅ PERBAIKAN: Tambahkan /auth sesuai rute Laravel Anda
   static const String login = "$baseUrlLaravel/auth/login";
@@ -15,7 +15,7 @@ class ApiEndpoints {
   static const String resetPassword = "$baseUrlLaravel/auth/reset-password";
 
   // KONEKSI KE PYTHON FLASK AI (Port 5000)
-  static const String baseUrlFlask = "http://10.106.143.18:5000";
+  static const String baseUrlFlask = "http://192.168.1.14:5000";
   static const String scanFood = "$baseUrlFlask/predict";
   static const String evaluateMeal = "$baseUrlFlask/predict/evaluation";
   static const String recommendKNN = "$baseUrlFlask/predict/recommendation";
