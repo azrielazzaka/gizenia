@@ -56,19 +56,24 @@ class CameraAIController extends GetxController {
         var result = jsonDecode(responseData);
         var n = result['nutrisi'];
         
+        // --- TAMBAHAN UNTUK CONFIDENCE (AKURASI) ---
+        // Mengubah format desimal (misal 0.98) menjadi persentase (98.0%)
+        double confidence = (result['confidence'] ?? 0.0).toDouble() * 100;
+        String akurasi = "${confidence.toStringAsFixed(1)}%";
+        
         if (n != null) {
-          aiResult.value = "🎯 ${result['makanan_terdeteksi']}\n\n"
+          aiResult.value = "🎯 ${result['makanan_terdeteksi']} ($akurasi)\n\n"
                            "🔥 Kalori: ${n['kalori']} kcal\n"
                            "🍗 Protein: ${n['protein']}g | 🍚 Karbo: ${n['karbohidrat']}g";
         } else {
-          aiResult.value = "🎯 Terdeteksi: ${result['makanan_terdeteksi']}\nNutrisi tidak ditemukan di database.";
+          aiResult.value = "🎯 Terdeteksi: ${result['makanan_terdeteksi']} ($akurasi)\nNutrisi tidak ditemukan...";
         }
       } else {
-        aiResult.value = "Pesan Server: $responseData";
+        aiResult.value = "Gagal menganalisis. (Kode: ${response.statusCode})";
       }
     } catch (e) {
-      aiResult.value = "ERROR ASLI: $e"; 
-      print("ERROR AI CAMERA: $e");
+      aiResult.value = "Terjadi kesalahan jaringan.";
+      Get.snackbar("Error", "Gagal menghubungi AI: $e");
     } finally {
       isScanning.value = false;
     }
