@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\FoodMenu; // <-- Menggunakan model FoodMenu yang benar
+use App\Models\FoodMenu; 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http; // <-- WAJIB ADA: Untuk menelpon AI Python
+use Illuminate\Support\Facades\Http; 
 
 class UserMenuController extends Controller
 {
@@ -13,78 +13,111 @@ class UserMenuController extends Controller
     {
         $user = auth()->user();
 
-        // 1. Ambil data fisik User (berikan nilai default jika belum mengisi)
-        $weight = $user->weight ?? 40; // kg
-        $height = $user->height ?? 140; // cm
-        $age = $user->age ?? 12; // tahun
+        // 1. Ambil input dari request (saat user klik submit di form) TANPA nilai default
+        $weight = $request->input('weight'); 
+        $height = $request->input('height'); 
+        $age = $request->input('age'); 
+        $gender = $request->input('gender'); 
+        $activity = $request->input('activity');
 
-        // 2. Kalkulasi TDEE & Target Makro (Karbo, Pro, Lemak)
-        $bmr = (10 * $weight) + (6.25 * $height) - (5 * $age) + 5;
-        $tdee = $bmr * 1.375;
-        $targetMealCalories = $tdee * 0.35; // 35% untuk 1x makan utama
-        
-        // Asumsi target makronutrisi seimbang untuk 1x makan
-        $targetProtein = ($weight * 1.5) * 0.35; 
-        $targetFat = ($targetMealCalories * 0.25) / 9;
-        $targetCarbs = ($targetMealCalories * 0.50) / 4;
-
-        // 3. MINTA REKOMENDASI KE MESIN AI (FLASK PYTHON) 🧠🤖
-        $recommendations = [];
-        try {
-            // Laravel "mengetuk pintu" port 5000 milik Python
-            $response = Http::timeout(5)->post('http://127.0.0.1:5000/api/predict/recommendation', [
-                'target_calories' => $targetMealCalories,
-                'target_protein' => $targetProtein,
-                'target_fat' => $targetFat,
-                'target_carbs' => $targetCarbs
-            ]);
-
-            // Jika Python menjawab (Status 200 OK)
-            if ($response->successful()) {
-                $aiData = $response->json();
-                $recommendations = $aiData['rekomendasi']; // Ambil array rekomendasinya dari Python
-            }
-        } catch (\Exception $e) {
-            // Jika server Python mati, fallback (kosongkan atau isi pesan error)
-            $recommendations = [];
+        // Jika form belum diisi, coba periksa apakah user tersebut sudah mengisi profil di database
+        if (!$weight && $user) {
+            $weight = $user->weight;
+            $height = $user->height;
+            $age = $user->age;
+            $gender = $user->gender;
+            $activity = $user->activity;
         }
 
-        // 4. Katalog Semua Menu (Hanya diambil 12 per halaman untuk Paginasi)
-       $query = FoodMenu::query();
-       
+        // 2. Siapkan wadah kosong (Nilai Default jika AI belum dijalankan)
+        $recommendations = [];
+        $clusterInfo = "Belum teridentifikasi";
+        $targetNutrisi = null;
+        $userStats = null;
+        
+        // PESAN DEFAULT SEBELUM FORM DIISI
+        $aiMessage = "Silakan isi data fisik Anda pada form di atas, lalu klik tombol 'Analisis Gizi' untuk mendapatkan rekomendasi yang presisi dari AI.";
 
-// 🔎 SEARCH (nama menu)
-if ($request->has('search') && $request->search != '') {
-    $query->where('name', 'like', '%' . $request->search . '%');
-}
-
-// 🔤 SORT ABJAD
-if ($request->sort == 'az') {
-    $query->orderBy('name', 'asc');
-} elseif ($request->sort == 'za') {
-    $query->orderBy('name', 'desc');
-}
-
-// 🔥 SORT KALORI
-if ($request->sort == 'cal_low') {
-    $query->orderBy('calories', 'asc');
-} elseif ($request->sort == 'cal_high') {
-    $query->orderBy('calories', 'desc');
-}
-
-// PAGINASI
-$paginatedMenus = $query->paginate(12)->appends($request->all());
-
-        return response()->json([
-            'user_stats' => [
+        // 3. HANYA JALANKAN MESIN AI JIKA DATA FISIK SUDAH ADA (TIDAK KOSONG)
+        if ($weight && $height && $age) {
+            
+            $userStats = [
                 'age' => $age,
                 'weight' => $weight,
                 'height' => $height,
-                'tdee' => round($tdee),
-                'target_meal' => round($targetMealCalories)
+                'gender' => $gender ?? 'male',
+                'activity' => $activity ?? 'moderate'
+            ];
+
+            try {
+                // Hubungi Mesin K-Means Python
+                $response = Http::timeout(5)->post('http://127.0.0.1:5000/api/predict/recommendation', [
+                    'weight' => $weight,
+                    'height' => $height,
+                    'age' => $age,
+                    'gender' => $gender ?? 'male',
+                    'activity' => $activity ?? 'moderate'
+                ]);
+
+                if ($response->successful()) {
+                    $aiData = $response->json();
+                    
+                    $clusterId = $aiData['cluster_id'];
+                    $clusterInfo = $aiData['cluster_name'];
+                    $targetNutrisi = $aiData['nutrisi_target'];
+                    $aiMessage = "Rekomendasi ini berasal dari cluster makanan ($clusterInfo) yang paling mendekati kebutuhan gizi Anda";
+
+                    // Ambil data dari MongoDB sesuai Cluster AI
+                    $menusInCluster = FoodMenu::where('cluster_id', $clusterId)->get();
+
+                    // Urutkan berdasarkan jarak Euclidean
+                    $recommendations = $menusInCluster->map(function ($menu) use ($targetNutrisi) {
+                        $distance = sqrt(
+                            // Kalori dibagi 10 agar setara porsinya dengan nilai makro gizi
+                            pow(($menu->calories - $targetNutrisi['calories']) / 10, 2) +
+                            pow($menu->protein - $targetNutrisi['protein'], 2) + 
+                            pow($menu->fat - $targetNutrisi['fat'], 2) +
+                            pow($menu->carbohydrates - $targetNutrisi['carbohydrates'], 2) 
+                        );
+                        
+                        // Normalisasi persentase kecocokan
+                        $menu->match_score = round(max(0, 100 - ($distance * 2)), 1);
+                        return $menu;
+                    })->sortByDesc('match_score')->take(10)->values();
+                }
+            } catch (\Exception $e) {
+                $aiMessage = "Gagal terhubung ke AI Service Python. Pastikan server Flask berjalan.";
+            }
+        }
+
+        // 4. Katalog Semua Menu Reguler (Akan selalu tampil meski form belum diisi)
+        $query = FoodMenu::query();
+
+        if ($request->has('search') && $request->search != '') {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->sort == 'az') {
+            $query->orderBy('name', 'asc');
+        } elseif ($request->sort == 'za') {
+            $query->orderBy('name', 'desc');
+        } elseif ($request->sort == 'cal_low') {
+            $query->orderBy('calories', 'asc');
+        } elseif ($request->sort == 'cal_high') {
+            $query->orderBy('calories', 'desc');
+        }
+
+        $paginatedMenus = $query->paginate(12)->appends($request->all());
+
+        return response()->json([
+            'user_stats' => $userStats,
+            'ai_analysis' => [
+                'cluster_name' => $clusterInfo,
+                'message' => $aiMessage,
+                'target_nutrisi' => $targetNutrisi
             ],
-            'recommendations' => $recommendations, // <-- Data ini sekarang murni dari AI Python!
-            'all_menus' => $paginatedMenus // Mengirim objek paginasi
+            'recommendations' => $recommendations, 
+            'all_menus' => $paginatedMenus 
         ]);
     }
 }
