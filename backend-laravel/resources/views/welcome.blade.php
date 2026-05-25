@@ -137,25 +137,26 @@ function closeModal() {
             <span class="text-xs font-bold text-gray-700">Vitality Assistant</span>
         </div>
 
-        <div class="max-w-2xl">
+         <div class="max-w-2xl">
             <span class="inline-block bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-6">
-                AI-Powered
+                AI-Powered Wellness
             </span>
             <h1 class="text-4xl lg:text-[54px] font-extrabold text-gray-900 leading-[1.1] tracking-tight mb-6">
-                Kembalikan <span class="text-emerald-600 italic font-bold">Keseimbangan</span><br>Nutrisi Anda.
+                "GIZENIA" <br><span class="text-emerald-600 italic font-bold">Prediksi Kalori</span><br>Program MBG.</h1>
             </h1>
             <p class="text-gray-500 text-base leading-relaxed mb-10 max-w-lg">
-                Platform cerdas berbasis AI untuk mengoptimalkan asupan nutrisi dan mendistribusikan pangan sehat secara presisi ke seluruh penjuru.
+                Platform AI yang mendukung distribusi makanan bergizi melalui analisis data, guna menghasilkan menu personal sesuai kebutuhan gizi secara tepat dan efisien.
             </p>
             <div class="flex flex-wrap gap-4">
                 <a href="/register" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-full text-sm font-bold shadow-lg shadow-emerald-200 transition-all transform hover:-translate-y-0.5">
                     Mulai Perjalanan Anda
                 </a>
-                <a href="#fitur" class="bg-blue-50/80 hover:bg-blue-100 text-blue-900 px-8 py-3.5 rounded-full text-sm font-bold transition-all">
+                <a href="#layanan" class="bg-blue-50/80 hover:bg-blue-100 text-blue-900 px-8 py-3.5 rounded-full text-sm font-bold transition-all">
                     Pelajari Lebih Lanjut
                 </a>
             </div>
         </div>
+
 
         <div class="relative w-full">
             <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Sayuran Segar" class="w-full h-[400px] lg:h-[480px] object-cover rounded-3xl shadow-2xl">
@@ -171,6 +172,7 @@ function closeModal() {
             </div>
         </div>
     </section>
+    
 
     <section class="bg-[#F8F9FA] py-20 mt-12">
         <div class="max-w-7xl mx-auto px-6 lg:px-8">
@@ -194,10 +196,10 @@ function closeModal() {
                 </div>
                 <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100 hover:shadow-md transition">
                     <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16M5 10a3 3 0 013-3h8a3 3 0 013 3M6 10v4a2 2 0 002 2h8a2 2 0 002-2v-4M8 18h8"></path></svg>
                     </div>
                     <h3 class="text-4xl font-black text-gray-900 mb-2">500+</h3>
-                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">Wilayah Distribusi</p>
+                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">Menu Makanan</p>
                 </div>
             </div>
         </div>
