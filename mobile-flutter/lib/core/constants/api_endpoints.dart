@@ -15,7 +15,7 @@ class ApiEndpoints {
   static const String resetPassword = "$baseUrlLaravel/auth/reset-password";
 
   // KONEKSI KE PYTHON FLASK AI (Port 5000)
-  static const String baseUrlFlask = "http://192.168.1.14:5000";
+  static const String baseUrlFlask = "http://192.168.1.14:5000/api";
   static const String scanFood = "$baseUrlFlask/predict";
   static const String evaluateMeal = "$baseUrlFlask/predict/evaluation";
   static const String recommendKNN = "$baseUrlFlask/predict/recommendation";
