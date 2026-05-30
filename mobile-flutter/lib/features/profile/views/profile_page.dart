@@ -37,7 +37,7 @@ class ProfilePage extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 // PROFILE IMAGE
-                _buildProfilePicture(),
+                _buildProfilePicture(controller.name.value),
 
                 const SizedBox(height: 16),
 
@@ -218,7 +218,19 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+String getInitials(String name) {
+  if (name.trim().isEmpty) return '';
 
+  List<String> words = name.trim().split(' ');
+
+  if (words.length == 1) {
+    return words[0][0].toUpperCase();
+  }
+
+  return (
+    words[0][0] + words[1][0]
+  ).toUpperCase();
+}
   // HEADER
   Widget _buildHeader() {
     return Row(
@@ -257,57 +269,45 @@ class ProfilePage extends StatelessWidget {
   }
 
   // PROFILE IMAGE
-  Widget _buildProfilePicture() {
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
+ Widget _buildProfilePicture(String name) {
+  return Stack(
+    alignment: Alignment.bottomRight,
+    children: [
 
-        Container(
-          width: 110,
-          height: 110,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2C2C2C),
-            borderRadius:
-                BorderRadius.circular(40),
-            border: Border.all(
-              color: Colors.white,
-              width: 4,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: 0.05,
-                ),
-                blurRadius: 10,
+      Container(
+        width: 110,
+        height: 110,
+        decoration: BoxDecoration(
+          color: Colors.green.shade300,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: 0.05,
               ),
-            ],
-          ),
-          child: const Icon(
-            Icons.person,
-            size: 70,
-            color: Colors.white,
-          ),
+              blurRadius: 10,
+            ),
+          ],
         ),
 
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.green.shade800,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white,
-              width: 3,
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: const TextStyle(
+              fontSize: 38,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-          child: const Icon(
-            Icons.edit,
-            color: Colors.white,
-            size: 16,
-          ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   // DATA CARD
   Widget _buildDataCard(

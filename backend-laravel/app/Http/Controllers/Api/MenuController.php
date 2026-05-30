@@ -77,83 +77,84 @@ class MenuController extends Controller
     }
 
     // Import Data dari CSV Makanan Indonesia (nutrition.csv)
+    // Import Data dari CSV Makanan Indonesia (nutrition.csv)
     public function importCsv(Request $request)
-{
-    // Validasi file
-    $request->validate([
-        'file' => 'required|file|mimes:csv,txt'
-    ]);
+    {
+        // 1. Mencegah Timeout untuk file CSV yang besar
+        set_time_limit(0);
 
-    $file = $request->file('file');
-    $fileHandle = fopen($file->getPathname(), 'r'); 
-
-    $importedCount = 0;
-    $isFirstRow = true;
-    $header = [];
-
-    // Gunakan fgets() untuk membaca baris mentah satu per satu
-    while (($line = fgets($fileHandle)) !== false) {
-        
-        // 1. Bersihkan \n, \r, dan spasi di ujung string
-        $line = trim($line);
-        // 2. Hapus tanda kutip ganda (") yang membungkus keseluruhan baris CSV ini
-        $line = trim($line, '"'); 
-        
-        // Lewati jika baris ternyata kosong
-        if (empty($line)) continue;
-
-        // 3. Pecah data berdasarkan koma
-        $row = explode(',', $line);
-
-        // Menangani Header (Baris Pertama)
-        if ($isFirstRow) {
-            $header = $row;
-            // Hapus karakter BOM tak kasat mata yang sering ada di awal file CSV
-            $header[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $header[0]);
-            $isFirstRow = false;
-            continue;
-        }
-
-        // Lewati jika jumlah kolom data tidak sama dengan jumlah header (mencegah error)
-        if (count($header) !== count($row)) {
-            continue;
-        }
-
-        // Gabungkan header sebagai Key dan row sebagai Value
-        $data = array_combine($header, $row);
-
-        // Masukkan data ke Database sesuai mapping model FoodMenu kamu
-        FoodMenu::create([
-            'kaggle_id'      => $data['id'] ?? null,
-            'name'           => ucwords($data['name'] ?? 'Menu Tanpa Nama'),
-            'serving_size_g' => 100, // Hardcode 100g karena dataset Indo umumnya per 100g
-            'calories'       => (float)($data['calories'] ?? 0),
-            'protein'        => (float)($data['proteins'] ?? 0), 
-            'carbohydrates'  => (float)($data['carbohydrate'] ?? 0), 
-            'fat'            => (float)($data['fat'] ?? 0),
-            
-            // Kolom mikronutrisi dan UI (diisi default 0 agar tidak error jika tidak boleh null di database)
-            'fiber'          => 0, 
-            'vitamin_a'      => 0, 
-            'vitamin_c'      => 0, 
-            'calcium'        => 0, 
-            'iron'           => 0, 
-            'sodium'         => 0, 
-            'category'       => 'UMUM', 
-            'meal_time'      => 'BEBAS',
-            
-            // Mengambil gambar dari CSV, jika kosong gunakan default image
-            'image_url'      => !empty($data['image']) ? $data['image'] : 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+        // Validasi file
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt'
         ]);
-        
-        $importedCount++;
-    }
 
-    fclose($fileHandle);
-    
-    return response()->json([
-        'message' => "$importedCount Makanan Indonesia berhasil diimport ke database!"
-    ]);
-}
-    
+        $file = $request->file('file');
+        $fileHandle = fopen($file->getPathname(), 'r'); 
+
+        $importedCount = 0;
+        $isFirstRow = true;
+        $header = [];
+
+        // 2. Menggunakan fgetcsv (LEBIH AMAN dari explode). 
+        // Ini otomatis mengabaikan koma yang ada di dalam tanda kutip teks.
+        while (($row = fgetcsv($fileHandle, 10000, ',')) !== false) {
+            
+            // Menangani Header (Baris Pertama)
+            if ($isFirstRow) {
+                $header = $row;
+                // Hapus karakter BOM tak kasat mata yang sering ada di awal file CSV
+                $header[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $header[0]);
+                $isFirstRow = false;
+                continue;
+            }
+
+            // Lewati jika jumlah kolom data tidak sama dengan jumlah header (mencegah error)
+            if (count($header) !== count($row)) {
+                continue;
+            }
+
+            // Gabungkan header sebagai Key dan row sebagai Value
+            $data = array_combine($header, $row);
+
+            // 3. Gunakan Try-Catch agar jika 1 baris gagal, aplikasi TIDAK CRASH (lanjut ke baris berikutnya)
+            try {
+                FoodMenu::create([
+                    'kaggle_id'      => $data['id'] ?? null,
+                    'name'           => ucwords($data['name'] ?? 'Menu Tanpa Nama'),
+                    'serving_size_g' => 100, 
+                    'calories'       => (float)($data['calories'] ?? 0),
+                    'protein'        => (float)($data['proteins'] ?? 0), 
+                    'carbohydrates'  => (float)($data['carbohydrate'] ?? 0), 
+                    'fat'            => (float)($data['fat'] ?? 0),
+                    
+                    // cluster_id dari K-Means
+                    'cluster_id'     => isset($data['cluster']) ? (int)$data['cluster'] : null, 
+
+                    // Kolom mikronutrisi dan UI 
+                    'fiber'          => 0, 
+                    'vitamin_a'      => 0,
+                    'vitamin_c'      => 0, 
+                    'calcium'        => 0, 
+                    'iron'           => 0, 
+                    'sodium'         => 0, 
+                    'category'       => 'UMUM', 
+                    'meal_time'      => 'BEBAS',
+                    
+                    // Mengambil gambar dari CSV, jika kosong gunakan default image
+                    'image_url'      => !empty($data['image']) ? $data['image'] : 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                ]);
+                
+                $importedCount++;
+            } catch (\Exception $e) {
+                // Abaikan baris yang error, lanjutkan loop ke data berikutnya
+                continue;
+            }
+        }
+
+        fclose($fileHandle);
+        
+        return response()->json([
+            'message' => "$importedCount Makanan Indonesia berhasil diimport ke database!"
+        ], 200);
+    }
 }

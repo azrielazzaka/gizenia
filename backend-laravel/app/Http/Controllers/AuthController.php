@@ -67,6 +67,9 @@ class AuthController extends Controller
     }
 
     // Lupa Password
+    // =========================================================================
+    // Lupa Password (SEKARANG SUDAH SINKRON DENGAN MOBILE & OTOMATIS KIRIM EMAIL)
+    // =========================================================================
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -76,7 +79,30 @@ class AuthController extends Controller
             return response()->json(['error' => 'Email tidak ditemukan'], 404);
         }
 
-        return response()->json(['message' => 'Instruksi reset kata sandi telah dikirim ke email Anda.']);
+        // 1. Generate 6 digit angka OTP acak yang aman
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        // 2. Simpan OTP dan masa berlakunya ke database user
+        $user->reset_otp = $otp;
+        $user->reset_otp_expires_at = now()->addMinutes(5); 
+        $user->save();
+
+        try {
+            // 3. 🔥 Pemicu kirim email ke gmail asli menggunakan view 'emails.otp'
+            Mail::send('emails.otp', ['otp' => $otp], function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Reset Password OTP - GIZENIA.AI');
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Gagal kirim email: ' . $e->getMessage()
+            ], 500);
+        }
+
+        // 4. Return pesan sukses yang ditangkap terminal Flutter kemarin
+        return response()->json([
+            'message' => 'Instruksi reset kata sandi telah dikirim ke email Anda.'
+        ], 200);
     }
 
 public function sendOtp(Request $request)

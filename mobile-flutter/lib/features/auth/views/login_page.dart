@@ -108,19 +108,28 @@ class LoginPage extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Input Kata Sandi
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Kata Sandi",
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
-                        ),
-                        Text(
-                          "Lupa sandi?",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green.shade800),
-                        ),
-                      ],
-                    ),
+                    // Input Kata Sandi
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    const Text(
+      "Kata Sandi",
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+    ),
+    // BUNGKUS DENGAN GESTURE DETECTOR DI SINI
+    GestureDetector(
+      onTap: () => Get.toNamed(Routes.FORGOT_PASSWORD), // Sesuaikan dengan nama rute di app_routes.dart kamu
+      child: Text(
+        "Lupa sandi?",
+        style: TextStyle(
+          fontSize: 12, 
+          fontWeight: FontWeight.bold, 
+          color: Colors.green.shade800,
+        ),
+      ),
+    ),
+  ],
+),
                    Obx(() => TextField(
   controller: passwordController,
   obscureText: isPasswordHidden.value,

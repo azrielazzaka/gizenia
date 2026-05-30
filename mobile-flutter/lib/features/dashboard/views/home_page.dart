@@ -67,7 +67,7 @@ class HomePage extends StatelessWidget {
                               String foods = (item['foods'] as List).map((f) => f['name']).join(', ');
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildFoodItem(foods, "Porsi Makan Utama", date, "LUNCH"),
+                                child: _buildFoodItem(foods, "Porsi Makan Utama", date, "Makanan Bergizi"),
                               );
                             }).toList(),
                           ),
@@ -145,50 +145,95 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildNutritionCard(DashboardController controller) {
-    double percent = (controller.consumedCalories.value / controller.targetCalories.value).clamp(0.0, 1.0);
+  return Obx(() {
+    // Persentase kalori
+    double totalCal = controller.targetCalories.value > 0 ? controller.targetCalories.value.toDouble() : 2000.0;
+    double calPercent = (controller.consumedCalories.value / totalCal).clamp(0.0, 1.0);
+
+    // Target (Bisa disesuaikan nanti di profil user)
+    double targetProtein = 100.0; 
+    double targetFats = 85.0;
+
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20)]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)],
+      ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text("Kondisi Nutrisi", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(20)),
-                child: Text("MEMUAT", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green.shade800)),
-              )
+              _buildStatusBadge(controller.consumedCalories.value),
             ],
           ),
-          Align(alignment: Alignment.centerLeft, child: Text("Status hari ini berdasarkan AI", style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.5))),
           const SizedBox(height: 30),
+          
+          // Lingkaran Kalori Utama
           CircularPercentIndicator(
-            radius: 80.0,
+            radius: 85.0,
             lineWidth: 12.0,
-            percent: percent,
+            percent: calPercent,
             center: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("${controller.targetCalories.value}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                Text("TARGET (KCAL)", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 1.0)),
+                Text("${controller.consumedCalories.value.toInt()}", 
+                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                Text("DARI ${totalCal.toInt()} KCAL", 
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
               ],
             ),
             progressColor: Colors.green.shade800,
             backgroundColor: Colors.grey.shade100,
             circularStrokeCap: CircularStrokeCap.round,
+            animation: true,
           ),
-          const SizedBox(height: 30),
-          _buildLinearProgress("PROTEINS", "${controller.consumedProtein.value}g", 0.0, Colors.grey.shade300),
-          const SizedBox(height: 16),
-          _buildLinearProgress("CARBS", "${controller.consumedCarbs.value}g", 0.0, Colors.grey.shade200),
-          const SizedBox(height: 16),
-          _buildLinearProgress("FATS", "${controller.consumedFats.value}g", 0.0, const Color(0xFFB54D69)),
+          const SizedBox(height: 35),
+
+          // Bar Protein
+          _buildLinearProgress(
+            "PROTEIN", 
+            "${controller.consumedProtein.value.toStringAsFixed(1)}g / ${targetProtein}g", 
+            (controller.consumedProtein.value / targetProtein).clamp(0.0, 1.0), 
+            Colors.blue.shade700
+          ),
+          const SizedBox(height: 20),
+
+          // Bar Lemak
+          _buildLinearProgress(
+            "LEMAK", 
+            "${controller.consumedFats.value.toStringAsFixed(1)}g / ${targetFats}g", 
+            (controller.consumedFats.value / targetFats).clamp(0.0, 1.0), 
+            const Color(0xFFB54D69) // Warna merah marun/pink tua
+          ),
         ],
       ),
     );
-  }
+  });
+}
+
+// Widget tambahan agar kode lebih rapi
+Widget _buildStatusBadge(double calories) {
+  bool hasEaten = calories > 0;
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: hasEaten ? Colors.green.shade50 : Colors.orange.shade50,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      hasEaten ? "TERISI" : "KOSONG",
+      style: TextStyle(
+        fontSize: 10, 
+        fontWeight: FontWeight.bold, 
+        color: hasEaten ? Colors.green.shade800 : Colors.orange.shade800
+      ),
+    ),
+  );
+}
 
   Widget _buildLinearProgress(String title, String value, double percent, Color color) {
     return Column(

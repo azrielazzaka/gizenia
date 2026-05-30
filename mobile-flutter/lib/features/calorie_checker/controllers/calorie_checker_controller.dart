@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -7,18 +8,24 @@ import '../../../../core/constants/api_endpoints.dart';
 class CalorieCheckerController extends GetxController {
   var isLoading = true.obs;
   
-  // ================= DATA KATALOG =================
-  var targetMealCalories = 2000.obs;
-  var userWeight = 0.0.obs;
-  var userHeight = 0.0.obs;
+  // ================= DATA KATALOG & FORM =================
+  final weightCtrl = TextEditingController();
+  final heightCtrl = TextEditingController();
+  final ageCtrl = TextEditingController();
+  var gender = 'male'.obs;
+  var activity = 'moderate'.obs;
+
+  var targetMealCalories = 700.obs; 
   var recommendations = [].obs;
   var allMenus = [].obs;
 
-  // Fitur Filter & Search
+  var hasAiData = false.obs;
+  var aiMessage = "Silakan isi data fisik Anda pada form di atas untuk analisis AI.".obs;
+  var aiMacros = {}.obs;
+
   var searchQuery = "".obs;
   var sortType = "".obs;
 
-  // Getter dinamis untuk list menu yang difilter
   List get filteredMenus {
     var list = allMenus.where((menu) => 
       menu['name'].toString().toLowerCase().contains(searchQuery.value.toLowerCase())
@@ -43,67 +50,112 @@ class CalorieCheckerController extends GetxController {
   var currentCarbs = 0.0.obs;
   var currentFat = 0.0.obs;
 
-  // Hasil AI
   var isAiLoading = false.obs;
   var aiVerdictTitle = "Belum Ada Data".obs;
   var aiVerdictMessage = "Tambahkan makanan untuk melihat apakah piringmu sudah seimbang.".obs;
-  var aiStatusColor = "gray".obs; // gray, green, orange, red
+  var aiStatusColor = "gray".obs; 
 
   @override
   void onInit() {
     super.onInit();
-    fetchMenus();
+    fetchMenus(fromForm: false);
   }
 
-  Future<void> fetchMenus() async {
+  void runAiAnalysis() {
+    if (weightCtrl.text.isEmpty || heightCtrl.text.isEmpty || ageCtrl.text.isEmpty) {
+      Get.snackbar(
+        "Perhatian", "Mohon lengkapi form Berat Badan, Tinggi Badan, dan Umur terlebih dahulu!",
+        backgroundColor: Colors.red.shade100, colorText: Colors.red.shade900,
+        icon: Icon(Icons.warning_amber_rounded, color: Colors.red.shade900),
+      );
+      return;
+    }
+    fetchMenus(fromForm: true);
+  }
+
+  Future<void> fetchMenus({bool fromForm = false}) async {
     try {
       isLoading.value = true;
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String token = prefs.getString('jwt_token') ?? '';
 
+      String url = ApiEndpoints.getMenus;
+      if (fromForm) {
+        url += "?weight=${weightCtrl.text}&height=${heightCtrl.text}&age=${ageCtrl.text}&gender=${gender.value}&activity=${activity.value}";
+      }
+
       var res = await http.get(
-        Uri.parse(ApiEndpoints.getMenus),
+        Uri.parse(url),
         headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
       );
 
       if (res.statusCode == 200) {
         var data = jsonDecode(res.body);
-        var stats = data['user_stats'];
-        userWeight.value = double.tryParse(stats['weight'].toString()) ?? 0.0;
-        userHeight.value = double.tryParse(stats['height'].toString()) ?? 0.0;
         
-        // Pastikan target tidak 0 agar tidak error saat dibagi (grafik lingkaran)
-        targetMealCalories.value = (stats['target_meal'] ?? 2000).round();
-        if (targetMealCalories.value == 0) targetMealCalories.value = 700; 
-
+        if (data['ai_analysis'] != null) {
+          aiMessage.value = data['ai_analysis']['message'] ?? "Rekomendasi berhasil dimuat.";
+          aiMacros.value = data['ai_analysis']['target_nutrisi'] ?? {};
+        }
+        
         recommendations.value = data['recommendations'] ?? [];
-        allMenus.value = data['all_menus']['data'] ?? [];
+        allMenus.value = data['all_menus'] != null ? data['all_menus']['data'] : data['data'] ?? [];
+        
+        hasAiData.value = recommendations.isNotEmpty;
+
+        if (data['user_stats'] != null) {
+          var stats = data['user_stats'];
+          if (!fromForm && stats['weight'] != null) {
+            weightCtrl.text = stats['weight'].toString();
+            heightCtrl.text = stats['height'].toString();
+            ageCtrl.text = stats['age'].toString();
+            gender.value = stats['gender'] ?? 'male';
+            activity.value = stats['activity'] ?? 'moderate';
+          }
+          
+          targetMealCalories.value = (stats['target_meal'] ?? 700).round();
+          if (targetMealCalories.value <= 0) targetMealCalories.value = 700;
+        }
       }
     } catch (e) {
-      Get.snackbar("Error", "Gagal memuat data katalog.");
+      Get.snackbar("Error", "Gagal memuat data dari server.");
     } finally {
       isLoading.value = false;
     }
   }
 
-  void addFoodToPlate(dynamic menu, double portionGrams) {
-    if (portionGrams <= 0) {
-      Get.snackbar("Perhatian", "Porsi harus lebih dari 0 gram", backgroundColor: Get.theme.colorScheme.errorContainer);
-      return;
-    }
+  Future<Iterable<Map<String, dynamic>>> searchFoodsDynamic(String query) async {
+    if (query.isEmpty) return const Iterable<Map<String, dynamic>>.empty();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String token = prefs.getString('jwt_token') ?? '';
+      
+      var res = await http.get(
+        Uri.parse(ApiEndpoints.getMenus + "?search=$query"),
+        headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+      );
+      
+      if (res.statusCode == 200) {
+        var data = jsonDecode(res.body);
+        List menus = data['all_menus'] != null ? data['all_menus']['data'] : data['data'] ?? [];
+        return menus.cast<Map<String, dynamic>>();
+      }
+    } catch (e) {}
+    return const Iterable<Map<String, dynamic>>.empty();
+  }
 
+  // ================= FUNGSI PIRINGKU =================
+  void addFoodToPlate(dynamic menu, double portionGrams) {
+    if (portionGrams <= 0) return;
     double standardPortion = double.tryParse(menu['serving_size_g'].toString()) ?? 100.0;
     double ratio = portionGrams / standardPortion;
 
     myPlate.add({
-      'name': menu['name'],
-      'weight': portionGrams,
+      'name': menu['name'], 'weight': portionGrams,
       'calories': (double.tryParse(menu['calories'].toString()) ?? 0.0) * ratio,
       'protein': (double.tryParse(menu['protein'].toString()) ?? 0.0) * ratio,
       'carbohydrates': (double.tryParse(menu['carbohydrates'].toString()) ?? 0.0) * ratio,
       'fat': (double.tryParse(menu['fat'].toString()) ?? 0.0) * ratio,
     });
-
     _calculateMacros();
   }
 
@@ -118,16 +170,20 @@ class CalorieCheckerController extends GetxController {
     currentCarbs.value = myPlate.fold(0, (sum, item) => sum + item['carbohydrates']);
     currentFat.value = myPlate.fold(0, (sum, item) => sum + item['fat']);
     
+    // Reset Vonis setiap kali piring berubah agar user tahu harus klik evaluasi lagi
     aiVerdictTitle.value = "Piring Berubah";
-    aiVerdictMessage.value = "Tekan Evaluasi AI untuk menganalisis komposisi baru.";
+    aiVerdictMessage.value = "Tekan 'Evaluasi Piring dengan AI' untuk menganalisis komposisi baru.";
     aiStatusColor.value = "gray";
   }
 
   Future<void> evaluateWithAI() async {
     if (myPlate.isEmpty) {
-      Get.snackbar("Tunggu Dulu!", "Pilih makanan terlebih dahulu.", backgroundColor: Get.theme.colorScheme.errorContainer);
+      Get.snackbar("Piring Kosong!", "Pilih minimal 1 makanan terlebih dahulu.", backgroundColor: Colors.red.shade100, colorText: Colors.red.shade900);
       return;
     }
+    
+    // Cegah klik berulang saat masih loading
+    if (isAiLoading.value) return; 
 
     isAiLoading.value = true;
     try {
@@ -138,11 +194,22 @@ class CalorieCheckerController extends GetxController {
         }).toList()
       };
 
+      String targetUrl = ApiEndpoints.evaluateMeal;
+      if (targetUrl.isEmpty) {
+        targetUrl = 'http://127.0.0.1:5000/api/predict/evaluation';
+      }
+
+      // BUG FIX: Jika pakai Emulator Android, localhost (127.0.0.1) harus diubah ke 10.0.2.2
+      if (GetPlatform.isAndroid) {
+        targetUrl = targetUrl.replaceAll('127.0.0.1', '10.0.2.2').replaceAll('localhost', '10.0.2.2');
+      }
+
+      // BUG FIX: Tambahkan Timeout 10 detik agar tidak nge-hang selamanya jika Python mati
       var res = await http.post(
-        Uri.parse(ApiEndpoints.evaluateMeal),
+        Uri.parse(targetUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
         var data = jsonDecode(res.body);
@@ -157,10 +224,13 @@ class CalorieCheckerController extends GetxController {
           else if (verdict.toLowerCase().contains("tinggi")) aiStatusColor.value = "orange";
           else aiStatusColor.value = "red";
         }
+      } else {
+        Get.snackbar("Error ${res.statusCode}", "Terjadi kesalahan pada Server AI Python.");
       }
     } catch (e) {
-      Get.snackbar("AI Offline", "Gagal menghubungi Server Python.", backgroundColor: Get.theme.colorScheme.errorContainer);
+      Get.snackbar("AI Offline", "Gagal terhubung ke AI Python. Pastikan server Flask aktif.", backgroundColor: Colors.red.shade100, colorText: Colors.red.shade900);
     } finally {
+      // Pastikan status loading dikembalikan menjadi false agar tombol hidup kembali
       isAiLoading.value = false;
     }
   }
