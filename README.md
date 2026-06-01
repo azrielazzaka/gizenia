@@ -1,10 +1,8 @@
 # GIZENIA - Sistem Rekomendasi Menu Makanan Bergizi AI
 
-![GIZENIA Banner](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge) ![Lisensi](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-
 **GIZENIA** adalah platform *Fullstack* (Web & Mobile) yang dirancang untuk mengelola dan mengoptimalkan Program Makan Bergizi Gratis (MBG) Nasional. 
 
-Sistem ini dilengkapi dengan integrasi Kecerdasan Buatan (**K-Means Clustering**) untuk mengevaluasi status gizi secara *real-time* dan memberikan rekomendasi menu yang dipersonalisasi berdasarkan metrik tubuh pengguna (BMI).
+Pada sistem ini kami belajar mengintegrasikan Machine Learning (**K-Means Clustering**) untuk mengevaluasi status gizi dan memberikan rekomendasi menu yang berdasarkan metrik tubuh pengguna (BMI). 
 
 ---
 
