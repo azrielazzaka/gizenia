@@ -35,12 +35,12 @@
                 <th class="py-4 px-6 font-semibold">Kelas</th> 
                 <th class="py-4 px-6 font-semibold">Fisik (U/B/T)</th>
                 <th class="py-4 px-6 font-semibold">Status</th>
-                <th class="py-4 px-6 font-semibold text-right">Aksi</th>
+    
             </tr>
         </thead>
         <tbody id="userTableBody" class="text-sm divide-y divide-gray-50">
             <tr>
-                <td colspan="6" class="py-8 text-center text-gray-400">
+                <td colspan="5" class="py-8 text-center text-gray-400">
                     <svg class="animate-spin h-6 w-6 mx-auto text-emerald-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     Memuat data...
                 </td>
@@ -185,7 +185,7 @@
         const searchVal = document.getElementById('searchInput').value;
         const roleVal = document.getElementById('roleFilter').value;
 
-        document.getElementById('userTableBody').innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400"><svg class="animate-spin h-6 w-6 mx-auto text-emerald-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memuat data...</td></tr>';
+        document.getElementById('userTableBody').innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400"><svg class="animate-spin h-6 w-6 mx-auto text-emerald-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memuat data...</td></tr>';
 
         const params = new URLSearchParams({
             page: page,
@@ -207,7 +207,7 @@
             renderPagination(responseData);
 
         } catch (error) {
-            document.getElementById('userTableBody').innerHTML = '<tr><td colspan="6" class="py-8 text-center text-red-500 text-sm">Gagal memuat data dari server.</td></tr>';
+            document.getElementById('userTableBody').innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500 text-sm">Gagal memuat data dari server.</td></tr>';
         }
     }
 
@@ -216,7 +216,7 @@
         tbody.innerHTML = ''; 
 
         if(users.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">Tidak ada data yang ditemukan.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400">Tidak ada data yang ditemukan.</td></tr>';
             return;
         }
 
@@ -246,10 +246,7 @@
                 <td class="py-4 px-6">${classInfo}</td>
                 <td class="py-4 px-6 text-gray-600 text-xs font-medium">${fisikInfo}</td>
                 <td class="py-4 px-6"><span class="text-emerald-600 flex items-center text-[11px] font-bold"><div class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></div>Aktif</span></td>
-                <td class="py-4 px-6 text-right space-x-3">
-                    <button onclick="editUser('${userId}')" class="text-blue-500 hover:text-blue-700 font-semibold text-xs transition">Edit</button>
-                    <button onclick="promptDeleteUser('${userId}')" class="text-red-500 hover:text-red-700 font-semibold text-xs transition">Hapus</button>
-                </td>
+                
             `;
             tbody.appendChild(tr);
         });
@@ -278,87 +275,7 @@
     document.getElementById('searchInput').addEventListener('input', debounce(() => fetchUsers(1), 500));
     document.getElementById('roleFilter').addEventListener('change', () => fetchUsers(1));
 
-    function editUser(id) {
-        currentUserId = id;
-        const user = allUsersData.find(u => (u._id === id || u.id === id));
-        if (user) {
-            document.getElementById('u_name').value = user.name || '';
-            document.getElementById('u_role').value = user.role || 'user';
-            document.getElementById('u_class').value = user.class_room || ''; // Tampilkan nilai kelas
-            document.getElementById('u_age').value = user.age || '';
-            document.getElementById('u_weight').value = user.weight || '';
-            document.getElementById('u_height').value = user.height || '';
-            toggleModal('editUserModal');
-        }
-    }
-
-    document.getElementById('editUserForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnSubmitUser');
-        btn.innerText = 'Menyimpan...';
-        btn.disabled = true;
-
-        const payload = {
-            name: document.getElementById('u_name').value,
-            role: document.getElementById('u_role').value,
-            class_room: document.getElementById('u_class').value, // Ambil dan simpan nilai kelas
-            age: document.getElementById('u_age').value,
-            weight: document.getElementById('u_weight').value,
-            height: document.getElementById('u_height').value
-        };
-
-        try {
-            const res = await fetch(`/api/users/${currentUserId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                toggleModal('editUserModal');
-                fetchUsers(currentPage); 
-            } else {
-                alert('Gagal memperbarui data pengguna.');
-            }
-        } catch (e) { alert('Server error.'); } 
-        finally {
-            btn.innerText = 'Simpan Perubahan';
-            btn.disabled = false;
-        }
-    });
-
-    function promptDeleteUser(id) {
-        userToDeleteId = id;
-        toggleModal('deleteUserModal');
-    }
-
-    async function executeDeleteUser() {
-        if (!userToDeleteId) return;
-        const btn = document.getElementById('btnConfirmDeleteUser');
-        btn.innerText = 'Menghapus...';
-        btn.disabled = true;
-
-        try {
-            const res = await fetch(`/api/users/${userToDeleteId}`, { 
-                method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                toggleModal('deleteUserModal');
-                fetchUsers(currentPage); 
-            } else {
-                alert(data.error || 'Gagal menghapus pengguna.');
-                toggleModal('deleteUserModal');
-            }
-        } catch (e) { alert('Error server.'); } 
-        finally {
-            btn.innerText = 'Ya, Hapus!';
-            btn.disabled = false;
-            userToDeleteId = null;
-        }
-    }
-
+ 
     fetchUsers(1);
 
     document.getElementById('addAdminForm').addEventListener('submit', async function(e) {
